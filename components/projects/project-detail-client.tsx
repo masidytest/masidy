@@ -31,6 +31,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { useToast } from '@/components/ui/use-toast'
+import { useLocale } from '@/components/providers/locale-provider'
 import { managedResourceLimits } from '@/lib/managed-resource-limits'
 
 interface ProjectChat {
@@ -101,6 +102,7 @@ const getChatTitle = (chat: ProjectChat) =>
   chat.name || chat.title || `Chat ${chat.id.slice(0, 8)}`
 
 export function ProjectDetailClient() {
+  const { t } = useLocale()
   const params = useParams<{ projectId: string }>()
   const projectId = params.projectId
   const router = useRouter()
@@ -560,7 +562,7 @@ export function ProjectDetailClient() {
             <FolderKanban className="size-6 text-muted-foreground" />
           </div>
           <div className="min-w-0">
-            <p className="text-sm text-muted-foreground">Project workspace</p>
+            <p className="text-sm text-muted-foreground">{t('Project workspace')}</p>
             <h1 className="mt-1 truncate text-3xl font-semibold tracking-tight">
               {project.name}
             </h1>
@@ -583,7 +585,7 @@ export function ProjectDetailClient() {
             <KeyRound className="size-4 text-muted-foreground" />
           </div>
           <div>
-            <h2 className="font-semibold">Environment variables</h2>
+            <h2 className="font-semibold">{t('Environment variables')}</h2>
             <p className="mt-1 text-sm text-muted-foreground">
               Store project secrets for generated apps. Values are never shown
               again after saving.
@@ -637,7 +639,7 @@ export function ProjectDetailClient() {
             value={envKey}
             onChange={(event) => setEnvKey(event.target.value)}
             placeholder="VARIABLE_NAME"
-            aria-label="Environment variable name"
+            aria-label={t('Environment variable name')}
             autoCapitalize="off"
             autoComplete="off"
             pattern="[A-Za-z_][A-Za-z0-9_]*"
@@ -648,8 +650,8 @@ export function ProjectDetailClient() {
             type="password"
             value={envValue}
             onChange={(event) => setEnvValue(event.target.value)}
-            placeholder="Secret value"
-            aria-label="Environment variable value"
+            placeholder={t('Secret value')}
+            aria-label={t('Environment variable value')}
             autoComplete="new-password"
             maxLength={8192}
             required
@@ -669,7 +671,7 @@ export function ProjectDetailClient() {
             <Globe2 className="size-4 text-muted-foreground" />
           </div>
           <div className="min-w-0 flex-1">
-            <h2 className="font-semibold">Custom domains</h2>
+            <h2 className="font-semibold">{t('Custom domains')}</h2>
             <p className="mt-1 text-sm text-muted-foreground">
               Connect a domain you own. DNS changes may be needed before it
               becomes live.
@@ -742,7 +744,7 @@ export function ProjectDetailClient() {
                 </div>
                 {!domain.verified && domain.verification?.length ? (
                   <div className="rounded-md bg-muted/50 p-3 text-xs">
-                    <p className="font-medium">DNS verification records</p>
+                    <p className="font-medium">{t('DNS verification records')}</p>
                     {domain.verification.map((record, index) => (
                       <div
                         key={`${domain.name}-${record.type}-${index}`}
@@ -778,7 +780,7 @@ export function ProjectDetailClient() {
             value={domainName}
             onChange={(event) => setDomainName(event.target.value)}
             placeholder="app.example.com"
-            aria-label="Custom domain"
+            aria-label={t('Custom domain')}
             autoCapitalize="off"
             autoComplete="url"
             maxLength={253}
@@ -807,7 +809,7 @@ export function ProjectDetailClient() {
 
       <section className="mt-8">
         <div className="mb-4">
-          <h2 className="text-lg font-semibold">Production deployments</h2>
+          <h2 className="text-lg font-semibold">{t('Production deployments')}</h2>
           <p className="text-sm text-muted-foreground">
             Latest deployments for this project’s completed chats.
           </p>
@@ -867,7 +869,7 @@ export function ProjectDetailClient() {
       <section className="mt-9">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h2 className="text-lg font-semibold">Chats</h2>
+            <h2 className="text-lg font-semibold">{t('Chats')}</h2>
             <p className="text-sm text-muted-foreground">
               {project.chats.length}{' '}
               {project.chats.length === 1 ? 'chat' : 'chats'} in this project
@@ -877,12 +879,12 @@ export function ProjectDetailClient() {
             {availableChats.length > 0 && (
               <>
                 <select
-                  aria-label="Choose a chat to add"
+                  aria-label={t('Choose a chat to add')}
                   className="h-9 max-w-56 rounded-md border border-input bg-background px-3 text-sm"
                   value={selectedChatId}
                   onChange={(event) => setSelectedChatId(event.target.value)}
                 >
-                  <option value="">Add an existing chat…</option>
+                  <option value="">{t('Add an existing chat…')}</option>
                   {availableChats.map((chat) => (
                     <option key={chat.id} value={chat.id}>
                       {getChatTitle(chat)}
@@ -915,7 +917,7 @@ export function ProjectDetailClient() {
         {project.chats.length === 0 ? (
           <div className="rounded-xl border border-dashed p-10 text-center">
             <MessageSquare className="mx-auto size-8 text-muted-foreground" />
-            <h3 className="mt-3 font-medium">No chats in this project yet</h3>
+            <h3 className="mt-3 font-medium">{t('No chats in this project yet')}</h3>
             <p className="mt-1 text-sm text-muted-foreground">
               Start a new project chat or add one of your existing chats.
             </p>
@@ -1012,7 +1014,7 @@ export function ProjectDetailClient() {
         <DialogContent>
           <form onSubmit={saveProject} className="space-y-4">
             <DialogHeader>
-              <DialogTitle>Project settings</DialogTitle>
+              <DialogTitle>{t('Project settings')}</DialogTitle>
               <DialogDescription>
                 Project instructions are included when creating new chats here.
               </DialogDescription>
@@ -1044,7 +1046,7 @@ export function ProjectDetailClient() {
                 value={instructions}
                 maxLength={4000}
                 onChange={(event) => setInstructions(event.target.value)}
-                placeholder="Visual style, framework, conventions, and shared requirements"
+                placeholder={t('Visual style, framework, conventions, and shared requirements')}
                 rows={5}
               />
             </div>
@@ -1063,8 +1065,8 @@ export function ProjectDetailClient() {
                   setPrivacy(event.target.value as 'private' | 'team')
                 }
               >
-                <option value="private">Private</option>
-                <option value="team">Team</option>
+                <option value="private">{t('Private')}</option>
+                <option value="team">{t('Team')}</option>
               </select>
             </div>
             <DialogFooter className="flex-row justify-between sm:justify-between">

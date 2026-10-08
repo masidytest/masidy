@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input'
 import useSWR from 'swr'
 import { useSearchParams } from 'next/navigation'
 import { useToast } from '@/components/ui/use-toast'
+import { useLocale } from '@/components/providers/locale-provider'
 
 interface V0Chat {
   id: string
@@ -36,6 +37,7 @@ const getFirstUserMessage = (chat: V0Chat) => {
 }
 
 export function ChatsClient() {
+  const { t, locale } = useLocale()
   const { data, error, isLoading, mutate } = useSWR<ChatsResponse>('/api/chats')
   const searchParams = useSearchParams()
   const { toast } = useToast()
@@ -88,16 +90,16 @@ export function ChatsClient() {
       )
       toast({
         title: result.favorited
-          ? 'Added to favorites'
-          : 'Removed from favorites',
+          ? t('Added to favorites')
+          : t('Removed from favorites'),
       })
     } catch (favoriteError) {
       toast({
-        title: 'Could not update favorite',
+        title: t('Could not update favorite'),
         description:
           favoriteError instanceof Error
             ? favoriteError.message
-            : 'Please try again.',
+            : t('Please try again.'),
         variant: 'destructive',
       })
     }
@@ -110,7 +112,7 @@ export function ChatsClient() {
           <div className="flex items-center justify-center py-12">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 dark:border-white"></div>
             <span className="ml-2 text-gray-600 dark:text-gray-300">
-              Loading chats...
+              {t('Loading chats…')}
             </span>
           </div>
         )}
@@ -120,10 +122,10 @@ export function ChatsClient() {
             <div className="flex">
               <div className="ml-3">
                 <h3 className="text-sm font-medium text-red-800 dark:text-red-200">
-                  Error loading chats
+                  {t('Error loading chats')}
                 </h3>
                 <p className="mt-1 text-sm text-red-700 dark:text-red-300">
-                  {error.message || 'Failed to load chats'}
+                  {t(error.message || 'Failed to load chats')}
                 </p>
               </div>
             </div>
@@ -135,10 +137,10 @@ export function ChatsClient() {
             <div className="mb-6 flex items-center justify-between">
               <div>
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                  Chats
+                  {t('Chats')}
                 </h2>
                 <p className="text-gray-600 dark:text-gray-300">
-                  {chats.length} {chats.length === 1 ? 'chat' : 'chats'}
+                  {chats.length} {t(chats.length === 1 ? 'chat' : 'chats')}
                 </p>
               </div>
               <Link
@@ -146,7 +148,7 @@ export function ChatsClient() {
                 className="inline-flex items-center rounded-md border border-foreground bg-foreground px-4 py-2 text-sm font-medium text-background shadow-sm transition-colors hover:bg-background hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
               >
                 <Plus className="h-4 w-4 mr-2" />
-                New Chat
+                {t('New Chat')}
               </Link>
             </div>
 
@@ -156,8 +158,8 @@ export function ChatsClient() {
                 <Input
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
-                  placeholder="Search chat names and prompts"
-                  aria-label="Search chats"
+                  placeholder={t('Search chat names and prompts')}
+                  aria-label={t('Search chats')}
                   className="pl-9"
                 />
               </label>
@@ -169,10 +171,10 @@ export function ChatsClient() {
                 <Star
                   className={`mr-2 size-4 ${favoriteOnly ? 'fill-current' : ''}`}
                 />
-                Favorites
+                {t('Favorites')}
               </Button>
               <label className="sr-only" htmlFor="chat-sort">
-                Sort chats
+                {t('Sort chats')}
               </label>
               <select
                 id="chat-sort"
@@ -182,18 +184,18 @@ export function ChatsClient() {
                   setSortOrder(event.target.value as 'recent' | 'oldest')
                 }
               >
-                <option value="recent">Recently updated</option>
-                <option value="oldest">Oldest updated</option>
+                <option value="recent">{t('Recently updated')}</option>
+                <option value="oldest">{t('Oldest updated')}</option>
               </select>
             </div>
 
             {chats.length === 0 ? (
               <div className="text-center py-12">
                 <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">
-                  No chats yet
+                  {t('No chats yet')}
                 </h3>
                 <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                  Get started by creating your first chat.
+                  {t('Get started by creating your first chat.')}
                 </p>
                 <div className="mt-6">
                   <Link
@@ -201,7 +203,7 @@ export function ChatsClient() {
                     className="inline-flex items-center rounded-md border border-foreground bg-foreground px-4 py-2 text-sm font-medium text-background shadow-sm transition-colors hover:bg-background hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                   >
                     <Plus className="h-4 w-4 mr-2" />
-                    New Chat
+                    {t('New Chat')}
                   </Link>
                 </div>
               </div>
@@ -221,11 +223,11 @@ export function ChatsClient() {
                           {chat.name || getFirstUserMessage(chat)}
                         </h3>
                         <div className="mt-2 flex items-center text-sm text-gray-500 dark:text-gray-400">
-                          <span>{chat.messages?.length || 0} messages</span>
+                          <span>{chat.messages?.length || 0} {t('messages')}</span>
                         </div>
                         <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                          Updated{' '}
-                          {new Date(chat.updatedAt).toLocaleDateString()}
+                          {t('Updated')}{' '}
+                          {new Date(chat.updatedAt).toLocaleDateString(locale === 'ar' ? 'ar' : 'en')}
                         </p>
                       </Link>
                       <Button

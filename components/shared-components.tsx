@@ -21,6 +21,7 @@ import {
   TaskItemFile,
 } from '@/components/ai-elements/task'
 import { CodeBlock as EnhancedCodeBlock } from '@/components/ui/code-block'
+import { useLocale } from '@/components/providers/locale-provider'
 
 // Wrapper for CodeBlock to use our enhanced version with syntax highlighting
 const CodeBlockWrapper = (props: CodeBlockProps) => {
@@ -90,6 +91,7 @@ export const TaskSectionWrapper = ({
   iconRenderer,
   ...props
 }: TaskSectionProps) => {
+  const { t } = useLocale()
   return (
     <Task
       className="w-full mb-4"
@@ -132,7 +134,7 @@ export const TaskSectionWrapper = ({
               }
 
               if (partObj.type === 'fetching-diagnostics') {
-                return <TaskItem key={index}>Checking for issues...</TaskItem>
+                return <TaskItem key={index}>{t('Checking for issues...')}</TaskItem>
               }
 
               if (partObj.type === 'diagnostics-passed') {
@@ -163,7 +165,7 @@ export const TaskSectionWrapper = ({
               }
 
               if (partObj.type === 'launch-tasks') {
-                return <TaskItem key={index}>Starting tasks...</TaskItem>
+                return <TaskItem key={index}>{t('Starting tasks...')}</TaskItem>
               }
 
               // Handle task-search-web-v1 part types
@@ -229,7 +231,9 @@ export const TaskSectionWrapper = ({
               // Handle other potential task types
               if (partObj.type === 'analyzing-requirements') {
                 return (
-                  <TaskItem key={index}>Analyzing requirements...</TaskItem>
+                  <TaskItem key={index}>
+                    {t('Analyzing requirements...')}
+                  </TaskItem>
                 )
               }
 

@@ -30,6 +30,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
 import { UserNav } from '@/components/user-nav'
+import { useLocale } from '@/components/providers/locale-provider'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -65,6 +66,7 @@ const getChatTitle = (chat: WorkspaceChat) =>
   'Untitled chat'
 
 export function WorkspaceShell({ children }: WorkspaceShellProps) {
+  const { t } = useLocale()
   const pathname = usePathname()
   const router = useRouter()
   const { data: session } = useSession()
@@ -180,7 +182,7 @@ export function WorkspaceShell({ children }: WorkspaceShellProps) {
         'flex h-full flex-col border-r border-border bg-background transition-[width] duration-200',
         collapsed ? 'w-[4.25rem]' : 'w-52',
       )}
-      aria-label="Workspace navigation"
+      aria-label={t('Workspace navigation')}
     >
       <div
         className={cn(
@@ -196,8 +198,8 @@ export function WorkspaceShell({ children }: WorkspaceShellProps) {
                 'h-9 min-w-0 justify-start gap-2 px-1 font-semibold',
                 collapsed && 'w-9 justify-center px-0',
               )}
-              aria-label="Select project workspace"
-              title={collapsed ? "Masidy's projects" : undefined}
+              aria-label={t('Select project workspace')}
+              title={collapsed ? t("Masidy's projects") : undefined}
             >
               <span className="grid size-6 shrink-0 place-items-center rounded-full bg-emerald-600 text-[11px] font-bold text-white">
                 M
@@ -205,7 +207,7 @@ export function WorkspaceShell({ children }: WorkspaceShellProps) {
               {!collapsed && (
                 <>
                   <span className="truncate text-left text-sm">
-                    Masidy&apos;s projects
+                    {t("Masidy's projects")}
                   </span>
                   <ChevronDown className="size-3.5 shrink-0 text-muted-foreground" />
                 </>
@@ -215,7 +217,7 @@ export function WorkspaceShell({ children }: WorkspaceShellProps) {
           <DropdownMenuContent align="start" className="w-60">
             <DropdownMenuItem asChild>
               <Link href="/projects" onClick={closeMobile}>
-                All projects
+                {t('All projects')}
               </Link>
             </DropdownMenuItem>
             {projects.length > 0 && <DropdownMenuSeparator />}
@@ -239,8 +241,8 @@ export function WorkspaceShell({ children }: WorkspaceShellProps) {
             size="icon"
             className="size-8"
             onClick={toggleCollapsed}
-            aria-label="Collapse sidebar"
-            title="Collapse sidebar"
+            aria-label={t('Collapse sidebar')}
+            title={t('Collapse sidebar')}
           >
             <PanelLeft className="size-4" />
           </Button>
@@ -260,14 +262,14 @@ export function WorkspaceShell({ children }: WorkspaceShellProps) {
           >
             <Link href="/" onClick={closeMobile}>
               <Plus className="size-4 shrink-0" />
-              {!collapsed && <span>New chat</span>}
+              {!collapsed && <span>{t('New chat')}</span>}
             </Link>
           </Button>
           {!collapsed && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
-                  aria-label="New chat options"
+                  aria-label={t('New chat options')}
                   className="shrink-0 rounded-l-none border-l border-primary-foreground/20 px-2"
                 >
                   <ChevronDown className="size-4" />
@@ -305,14 +307,14 @@ export function WorkspaceShell({ children }: WorkspaceShellProps) {
           <Search className="size-4 shrink-0" />
           {!collapsed && (
             <>
-              <span className="flex-1 text-left">Search chats</span>
+              <span className="flex-1 text-left">{t('Search chats')}</span>
               <kbd className="rounded border px-1 text-[10px]">Ctrl K</kbd>
             </>
           )}
         </Button>
       </div>
 
-      <nav className="space-y-1 px-2" aria-label="Main navigation">
+      <nav className="space-y-1 px-2" aria-label={t('Main navigation')}>
         <Button
           asChild
           variant={pathname === '/' ? 'secondary' : 'ghost'}
@@ -324,7 +326,7 @@ export function WorkspaceShell({ children }: WorkspaceShellProps) {
         >
           <Link href="/" onClick={closeMobile}>
             <Home className="size-4 shrink-0" />
-            {!collapsed && <span>Home</span>}
+            {!collapsed && <span>{t('Home')}</span>}
           </Link>
         </Button>
         <Button
@@ -338,7 +340,7 @@ export function WorkspaceShell({ children }: WorkspaceShellProps) {
         >
           <Link href="/projects" onClick={closeMobile}>
             <FolderKanban className="size-4 shrink-0" />
-            {!collapsed && <span>Projects</span>}
+            {!collapsed && <span>{t('Projects')}</span>}
           </Link>
         </Button>
         <Button
@@ -352,7 +354,7 @@ export function WorkspaceShell({ children }: WorkspaceShellProps) {
         >
           <Link href="/chats" onClick={closeMobile}>
             <MessageSquare className="size-4 shrink-0" />
-            {!collapsed && <span>Chats</span>}
+            {!collapsed && <span>{t('Chats')}</span>}
           </Link>
         </Button>
         <Button
@@ -368,7 +370,7 @@ export function WorkspaceShell({ children }: WorkspaceShellProps) {
         >
           <Link href="/design-systems" onClick={closeMobile}>
             <Palette className="size-4 shrink-0" />
-            {!collapsed && <span>Design Systems</span>}
+            {!collapsed && <span>{t('Design Systems')}</span>}
           </Link>
         </Button>
         <Button
@@ -382,7 +384,7 @@ export function WorkspaceShell({ children }: WorkspaceShellProps) {
         >
           <Link href="/templates" onClick={closeMobile}>
             <LayoutTemplate className="size-4 shrink-0" />
-            {!collapsed && <span>Templates</span>}
+            {!collapsed && <span>{t('Templates')}</span>}
           </Link>
         </Button>
       </nav>
@@ -443,8 +445,8 @@ export function WorkspaceShell({ children }: WorkspaceShellProps) {
               <Link
                 href="/projects"
                 onClick={closeMobile}
-                aria-label="Manage projects"
-                title="Manage projects"
+                aria-label={t('Manage projects')}
+                title={t('Manage projects')}
                 className="rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
               >
                 <Plus className="size-3.5" />
@@ -584,8 +586,8 @@ export function WorkspaceShell({ children }: WorkspaceShellProps) {
               size="icon"
               className="fixed left-2 top-3 z-40 size-6 rounded-full bg-background"
               onClick={toggleCollapsed}
-              aria-label="Expand sidebar"
-              title="Expand sidebar"
+              aria-label={t('Expand sidebar')}
+              title={t('Expand sidebar')}
             >
               <ChevronRight className="size-3" />
             </Button>
@@ -600,7 +602,7 @@ export function WorkspaceShell({ children }: WorkspaceShellProps) {
         size="icon"
         className="fixed left-3 top-3 z-40 size-9 bg-background shadow lg:hidden"
         onClick={() => setMobileOpen(true)}
-        aria-label="Open workspace navigation"
+        aria-label={t('Open workspace navigation')}
         aria-expanded={mobileOpen}
         aria-controls="workspace-mobile-navigation"
       >
@@ -611,7 +613,7 @@ export function WorkspaceShell({ children }: WorkspaceShellProps) {
         <div className="fixed inset-0 z-50 lg:hidden">
           <button
             type="button"
-            aria-label="Close workspace navigation"
+            aria-label={t('Close workspace navigation')}
             className="absolute inset-0 bg-black/50"
             onClick={closeMobile}
           />
@@ -619,7 +621,7 @@ export function WorkspaceShell({ children }: WorkspaceShellProps) {
             id="workspace-mobile-navigation"
             role="dialog"
             aria-modal="true"
-            aria-label="Workspace navigation"
+            aria-label={t('Workspace navigation')}
             className="absolute inset-y-0 left-0 shadow-xl"
           >
             {sidebar}
@@ -628,7 +630,7 @@ export function WorkspaceShell({ children }: WorkspaceShellProps) {
               size="icon"
               className="absolute right-2 top-3 size-8"
               onClick={closeMobile}
-              aria-label="Close workspace navigation"
+              aria-label={t('Close workspace navigation')}
             >
               <X className="size-4" />
             </Button>
@@ -649,7 +651,7 @@ export function WorkspaceShell({ children }: WorkspaceShellProps) {
 
       <Dialog open={searchOpen} onOpenChange={setSearchOpen}>
         <DialogContent className="top-[18%] max-w-xl translate-y-0 gap-3 p-3">
-          <DialogTitle className="sr-only">Search chats</DialogTitle>
+          <DialogTitle className="sr-only">{t('Search chats')}</DialogTitle>
           <DialogDescription className="sr-only">
             Search your chats by title or prompt.
           </DialogDescription>
@@ -659,8 +661,8 @@ export function WorkspaceShell({ children }: WorkspaceShellProps) {
               autoFocus
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              placeholder="Search your chats…"
-              aria-label="Search your chats"
+              placeholder={t('Search your chats…')}
+              aria-label={t('Search your chats')}
               className="border-0 shadow-none focus-visible:ring-0"
             />
           </div>
@@ -699,8 +701,8 @@ export function WorkspaceShell({ children }: WorkspaceShellProps) {
             )}
           </div>
           <div className="flex items-center justify-between border-t px-1 pt-2 text-xs text-muted-foreground">
-            <span>Search chats by title or prompt</span>
-            <span>Esc to close</span>
+            <span>{t('Search chats by title or prompt')}</span>
+            <span>{t('Esc to close')}</span>
           </div>
         </DialogContent>
       </Dialog>

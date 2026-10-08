@@ -124,3 +124,47 @@
 button {
   cursor: pointer;
 }
+
+html[dir='rtl'] .mr-2 {
+  margin-right: 0;
+  margin-left: 0.5rem;
+}
+
+html[dir='rtl'] .mr-3 {
+  margin-right: 0;
+  margin-left: 0.75rem;
+}
+
+html[dir='rtl'] .ml-2 {
+  margin-left: 0;
+  margin-right: 0.5rem;
+}
+
+html[dir='rtl'] .ml-auto {
+  margin-left: 0;
+  margin-right: auto;
+}
+
+html[dir='rtl'] .left-3 {
+  right: 0.75rem;
+  left: auto;
+}
+
+html[dir='rtl'] .left-4 {
+  right: 1rem;
+  left: auto;
+}
+
+html[dir='rtl'] .pl-9 {
+  padding-right: 2.25rem;
+  padding-left: 0.75rem;
+}
+
+html[dir='rtl'] #mobile-navigation {
+  right: auto;
+  left: 0;
+}
+
+html[dir='rtl'] #mobile-navigation.translate-x-full {
+  --tw-translate-x: -100%;
+}

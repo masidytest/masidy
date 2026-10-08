@@ -32,6 +32,7 @@ import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
 import { CodeView } from '@/components/chat/code-view'
 import { GithubPushModal } from '@/components/chat/github-push-modal'
+import { useLocale } from '@/components/providers/locale-provider'
 
 interface Chat {
   id: string
@@ -99,6 +100,7 @@ export function PreviewPanel({
   externalUrl,
   forceTab,
 }: PreviewPanelProps) {
+  const { t } = useLocale()
   const [activeTab, setActiveTab] = useState<'preview' | 'code'>('preview')
   const [isGithubModalOpen, setIsGithubModalOpen] = useState(false)
   const [isMobileViewport, setIsMobileViewport] = useState(false)
@@ -135,7 +137,7 @@ export function PreviewPanel({
       >
         <WebPreviewNavigation>
           <select
-            aria-label="Preview version"
+            aria-label={t('Preview version')}
             className="h-8 w-24 shrink-0 rounded-md border border-transparent bg-transparent px-2 text-xs hover:border-border"
             value={
               versionHistory?.length
@@ -169,26 +171,26 @@ export function PreviewPanel({
                   }
                 >
                   {index === versionHistory.length - 1
-                    ? 'Latest'
-                    : `Version ${version.version}`}
+                    ? t('Latest')
+                    : `${t('Version')} ${version.version}`}
                 </option>
               ))
             ) : (
-              <option value="latest">Latest</option>
+              <option value="latest">{t('Latest')}</option>
             )}
           </select>
 
           <div className="flex min-w-0 flex-1 items-center justify-center gap-1">
             <WebPreviewNavigationButton
-              aria-label="Go back"
-              tooltip="Go back"
+              aria-label={t('Go back')}
+              tooltip={t('Go back')}
               disabled
             >
               <ArrowLeft className="size-4" />
             </WebPreviewNavigationButton>
             <WebPreviewNavigationButton
-              aria-label="Go forward"
-              tooltip="Go forward"
+              aria-label={t('Go forward')}
+              tooltip={t('Go forward')}
               disabled
             >
               <ArrowRight className="size-4" />
@@ -196,11 +198,11 @@ export function PreviewPanel({
             <WebPreviewNavigationButton
               aria-label={
                 isMobileViewport
-                  ? 'Use desktop viewport'
-                  : 'Use mobile viewport'
+                  ? t('Use desktop viewport')
+                  : t('Use mobile viewport')
               }
               tooltip={
-                isMobileViewport ? 'Desktop viewport' : 'Mobile viewport'
+                isMobileViewport ? t('Desktop viewport') : t('Mobile viewport')
               }
               onClick={() => setIsMobileViewport((mobile) => !mobile)}
               className={cn(
@@ -216,7 +218,7 @@ export function PreviewPanel({
             </WebPreviewNavigationButton>
             <div className="flex min-w-0 flex-1 items-center rounded-md border border-border px-2">
               <Input
-                aria-label="Preview path"
+                aria-label={t('Preview path')}
                 className="h-7 border-0 bg-transparent px-1 text-xs shadow-none focus-visible:ring-0"
                 readOnly
                 value={
@@ -232,10 +234,10 @@ export function PreviewPanel({
             <WebPreviewNavigationButton
               aria-label={
                 externalUrl
-                  ? 'Open published project in a new tab'
-                  : 'Open preview in a new tab'
+                  ? t('Open published project in a new tab')
+                  : t('Open preview in a new tab')
               }
-              tooltip={externalUrl ? 'Open published site' : 'Open preview'}
+              tooltip={externalUrl ? t('Open published site') : t('Open preview')}
               disabled={!openUrl}
               onClick={() => {
                 if (openUrl) {
@@ -246,8 +248,8 @@ export function PreviewPanel({
               <ExternalLink className="size-4" />
             </WebPreviewNavigationButton>
             <WebPreviewNavigationButton
-              aria-label="Refresh preview"
-              tooltip="Refresh preview"
+              aria-label={t('Refresh preview')}
+              tooltip={t('Refresh preview')}
               onClick={() => setRefreshKey((previous) => previous + 1)}
               disabled={!previewUrl}
             >
@@ -256,8 +258,8 @@ export function PreviewPanel({
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <WebPreviewNavigationButton
-                  aria-label="Preview actions"
-                  tooltip="Preview actions"
+                  aria-label={t('Preview actions')}
+                  tooltip={t('Preview actions')}
                 >
                   <ChevronDown className="size-4" />
                 </WebPreviewNavigationButton>
@@ -270,7 +272,7 @@ export function PreviewPanel({
                   }}
                 >
                   <Code className="mr-2 size-4" />
-                  View code
+                  {t('View code')}
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => setIsFullscreen(!isFullscreen)}
@@ -280,7 +282,7 @@ export function PreviewPanel({
                   ) : (
                     <Maximize className="mr-2 size-4" />
                   )}
-                  {isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
+                  {isFullscreen ? t('Exit fullscreen') : t('Fullscreen')}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
@@ -288,25 +290,25 @@ export function PreviewPanel({
                   disabled={!onShareClick}
                 >
                   <Share2 className="mr-2 size-4" />
-                  {previewUrl ? 'Copy preview link' : 'Copy chat link'}
+                  {previewUrl ? t('Copy preview link') : t('Copy chat link')}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setIsGithubModalOpen(true)}>
                   <Github className="mr-2 size-4" />
-                  Export project
+                  {t('Export project')}
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => void onDeployClick?.()}
                   disabled={!onDeployClick}
                   title={
                     !currentChat?.projectId
-                      ? 'Assign this chat to a project before deploying.'
+                      ? t('Assign this chat to a project before deploying.')
                       : currentChat.latestVersion?.status !== 'completed'
-                        ? 'A completed project version is required to deploy.'
+                        ? t('A completed project version is required to deploy.')
                         : undefined
                   }
                 >
                   <ExternalLink className="mr-2 size-4" />
-                  Publish project
+                  {t('Publish project')}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -328,10 +330,10 @@ export function PreviewPanel({
             <div className="flex-1 flex items-center justify-center bg-gray-50 dark:bg-black">
               <div className="text-center">
                 <p className="text-sm font-medium text-gray-700 dark:text-gray-200">
-                  No preview available
+                  {t('No preview available')}
                 </p>
                 <p className="text-xs text-gray-700/50 dark:text-gray-200/50">
-                  Start a conversation to see your app here
+                  {t('Start a conversation to see your app here')}
                 </p>
               </div>
             </div>
@@ -346,10 +348,10 @@ export function PreviewPanel({
               <div className="flex-1 flex items-center justify-center bg-gray-50 dark:bg-black">
                 <div className="text-center">
                   <p className="text-sm font-medium text-gray-700 dark:text-gray-200">
-                    No files to display
+                    {t('No files to display')}
                   </p>
                   <p className="text-xs text-gray-700/50 dark:text-gray-200/50">
-                    Generate a project to see the code here
+                    {t('Generate a project to see the code here')}
                   </p>
                 </div>
               </div>

@@ -15,7 +15,9 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ChatSelector } from './chat-selector'
+import { useLocale } from '@/components/providers/locale-provider'
 export function MobileMenu() {
+  const { t } = useLocale()
   const [isOpen, setIsOpen] = useState(false)
   const [isAnimating, setIsAnimating] = useState(false)
   const pathname = usePathname()
@@ -75,7 +77,7 @@ export function MobileMenu() {
         aria-controls="mobile-navigation"
       >
         <Menu className="h-5 w-5" />
-        <span className="sr-only">Open menu</span>
+        <span className="sr-only">{t('Open menu')}</span>
       </Button>
 
       {/* Mobile menu overlay */}
@@ -94,7 +96,7 @@ export function MobileMenu() {
             id="mobile-navigation"
             role="dialog"
             aria-modal="true"
-            aria-label="Mobile navigation"
+            aria-label={t('Mobile navigation')}
             className={`fixed inset-y-0 right-0 w-full max-w-sm bg-white dark:bg-black border-l border-border shadow-lg transform transition-transform duration-300 ease-out ${
               isAnimating ? 'translate-x-0' : 'translate-x-full'
             }`}
@@ -109,7 +111,7 @@ export function MobileMenu() {
                   onClick={closeMenu}
                 >
                   <X className="h-5 w-5" />
-                  <span className="sr-only">Close menu</span>
+                  <span className="sr-only">{t('Close menu')}</span>
                 </Button>
               </div>
 
@@ -119,7 +121,7 @@ export function MobileMenu() {
                 {session?.user?.id && (
                   <div className="space-y-2">
                     <h3 className="text-sm font-medium text-muted-foreground">
-                      Your Chats
+                      {t('Your Chats')}
                     </h3>
                     <div className="w-full">
                       <ChatSelector />
@@ -171,7 +173,7 @@ export function MobileMenu() {
                       >
                         <Link href={href} onClick={closeMenu}>
                           {Icon && <Icon className="mr-3 size-4" />}
-                          <span className="font-medium">{label}</span>
+                          <span className="font-medium">{t(label)}</span>
                         </Link>
                       </Button>
                     ))}

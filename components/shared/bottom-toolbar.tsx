@@ -2,6 +2,7 @@
 
 import { MessageSquare, Monitor, Code } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useLocale } from '@/components/providers/locale-provider'
 
 interface BottomToolbarProps {
   activePanel: 'chat' | 'preview' | 'code'
@@ -16,6 +17,7 @@ export function BottomToolbar({
   hasPreview,
   hasCode,
 }: BottomToolbarProps) {
+  const { t } = useLocale()
   return (
     <div className="bg-white dark:bg-black py-4 px-2 border-t border-border dark:border-input">
       <div className="flex items-center justify-center max-w-xs mx-auto">
@@ -30,7 +32,7 @@ export function BottomToolbar({
             )}
           >
             <MessageSquare className="h-4 w-4" />
-            <span>Chat</span>
+            <span>{t('Chat')}</span>
           </button>
 
           <button
@@ -46,7 +48,7 @@ export function BottomToolbar({
             )}
           >
             <Code className="h-4 w-4" />
-            <span>Code</span>
+            <span>{t('Code')}</span>
           </button>
 
           <button
@@ -62,7 +64,7 @@ export function BottomToolbar({
             )}
           >
             <Monitor className="h-4 w-4" />
-            <span>Preview</span>
+            <span>{t('Preview')}</span>
           </button>
         </div>
       </div>

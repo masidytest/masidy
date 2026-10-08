@@ -16,6 +16,7 @@ import {
   clearPromptFromStorage,
 } from '@/components/ai-elements/prompt-input'
 import { useToast } from '@/components/ui/use-toast'
+import { useLocale } from '@/components/providers/locale-provider'
 import { RateLimit } from '@/components/rate-limit'
 import { extractCodeFiles } from '@/lib/code-files'
 import { Button } from '@/components/ui/button'
@@ -85,6 +86,7 @@ interface VersionEntry {
 }
 
 export function ChatDetailClient() {
+  const { t } = useLocale()
   const params = useParams()
   const chatId = params.chatId as string
   const [isFullscreen, setIsFullscreen] = useState(false)
@@ -885,7 +887,7 @@ export function ChatDetailClient() {
             variant={activePanel === 'chat' ? 'secondary' : 'ghost'}
             size="icon"
             className="size-8 shrink-0 lg:hidden"
-            aria-label="Show chat"
+            aria-label={t('Show chat')}
             aria-pressed={activePanel === 'chat'}
             onClick={() => setActivePanel('chat')}
           >
@@ -893,7 +895,7 @@ export function ChatDetailClient() {
           </Button>
           <div
             role="group"
-            aria-label="Project view"
+            aria-label={t('Project view')}
             className="flex h-8 shrink-0 items-center rounded-md border border-border bg-muted/50 p-0.5"
           >
             <Button
@@ -901,8 +903,8 @@ export function ChatDetailClient() {
               variant={activePanel === 'preview' ? 'secondary' : 'ghost'}
               size="icon"
               className="size-7 rounded"
-              aria-label="Show preview"
-              title="Preview"
+              aria-label={t('Show preview')}
+              title={t('Preview')}
               aria-pressed={activePanel === 'preview'}
               onClick={() => setActivePanel('preview')}
             >
@@ -913,8 +915,8 @@ export function ChatDetailClient() {
               variant={activePanel === 'code' ? 'secondary' : 'ghost'}
               size="icon"
               className="size-7 rounded"
-              aria-label="Show code"
-              title="Code"
+              aria-label={t('Show code')}
+              title={t('Code')}
               aria-pressed={activePanel === 'code'}
               onClick={() => setActivePanel('code')}
             >
@@ -927,8 +929,8 @@ export function ChatDetailClient() {
             variant="ghost"
             size="icon"
             className="size-8 shrink-0"
-            aria-label="New chat"
-            title="New chat"
+            aria-label={t('New chat')}
+            title={t('New chat')}
           >
             <Link
               href={
@@ -949,7 +951,7 @@ export function ChatDetailClient() {
                 variant="ghost"
                 size="icon"
                 className="hidden size-8 sm:inline-flex"
-                aria-label="Chat and project actions"
+                aria-label={t('Chat and project actions')}
               >
                 <MoreHorizontal className="size-4" />
               </Button>
@@ -1084,11 +1086,11 @@ export function ChatDetailClient() {
                 </DropdownMenuItem>
               )}
               <DropdownMenuSeparator />
-              <DropdownMenuItem disabled title="Transfer is not available yet">
+              <DropdownMenuItem disabled title={t('Transfer is not available yet')}>
                 <ArrowLeftRight className="mr-2 size-4" />
                 Transfer...
               </DropdownMenuItem>
-              <DropdownMenuItem disabled title="Archive is not available yet">
+              <DropdownMenuItem disabled title={t('Archive is not available yet')}>
                 <Archive className="mr-2 size-4" />
                 Archive
               </DropdownMenuItem>
@@ -1099,10 +1101,10 @@ export function ChatDetailClient() {
             variant="outline"
             size="sm"
             onClick={() => setIsInviteOpen(true)}
-            aria-label="Invite people to this chat"
+            aria-label={t('Invite people to this chat')}
           >
             <Share2 className="size-4" />
-            <span className="hidden sm:inline">Invite</span>
+            <span className="hidden sm:inline">{t('Invite')}</span>
           </Button>
           <Button
             type="button"
@@ -1110,8 +1112,8 @@ export function ChatDetailClient() {
             size="sm"
             className="hidden gap-1.5 sm:inline-flex"
             disabled
-            title="Git branch controls are not connected yet"
-            aria-label="Current Git branch unavailable"
+            title={t('Git branch controls are not connected yet')}
+            aria-label={t('Current Git branch unavailable')}
           >
             <GitBranch className="size-4" />
             <span>main</span>
@@ -1123,11 +1125,11 @@ export function ChatDetailClient() {
             className="bg-white text-black hover:bg-neutral-200 dark:bg-white dark:text-black dark:hover:bg-neutral-200"
             onClick={() => void handlePublish()}
             disabled={isPublishing}
-            aria-label={isPublishing ? 'Publishing project' : 'Publish project'}
+            aria-label={t(isPublishing ? 'Publishing project' : 'Publish project')}
           >
             <Globe2 className="size-4" />
             <span className="hidden md:inline">
-              {isPublishing ? 'Publishing…' : 'Publish'}
+              {t(isPublishing ? 'Publishing…' : 'Publish')}
             </span>
           </Button>
         </div>
@@ -1136,9 +1138,9 @@ export function ChatDetailClient() {
       <Dialog open={isRenameOpen} onOpenChange={setIsRenameOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Rename chat</DialogTitle>
+            <DialogTitle>{t('Rename chat')}</DialogTitle>
             <DialogDescription>
-              Enter a new name for this chat.
+              {t('Enter a new name for this chat.')}
             </DialogDescription>
           </DialogHeader>
           <Input
@@ -1152,7 +1154,7 @@ export function ChatDetailClient() {
               }
             }}
             disabled={isRenamingChat}
-            aria-label="Chat name"
+            aria-label={t('Chat name')}
           />
           <DialogFooter>
             <Button
@@ -1161,7 +1163,7 @@ export function ChatDetailClient() {
               onClick={() => setIsRenameOpen(false)}
               disabled={isRenamingChat}
             >
-              Cancel
+              {t('Cancel')}
             </Button>
             <Button
               type="button"
@@ -1172,7 +1174,7 @@ export function ChatDetailClient() {
                 renameChatName.trim().length > 100
               }
             >
-              {isRenamingChat ? 'Renaming...' : 'Rename'}
+              {t(isRenamingChat ? 'Renaming...' : 'Rename')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1184,10 +1186,9 @@ export function ChatDetailClient() {
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Set up project settings</DialogTitle>
+            <DialogTitle>{t('Set up project settings')}</DialogTitle>
             <DialogDescription>
-              Project settings belong to a project. Add this chat to an
-              existing project or create a new project to open its settings.
+              {t('Project settings belong to a project. Add this chat to an existing project or create a new project to open its settings.')}
             </DialogDescription>
           </DialogHeader>
           {projectsResult?.data.length ? (
@@ -1196,7 +1197,7 @@ export function ChatDetailClient() {
                 htmlFor="chat-settings-project"
                 className="text-sm font-medium"
               >
-                Existing project
+                {t('Existing project')}
               </label>
               <select
                 id="chat-settings-project"
@@ -1214,8 +1215,7 @@ export function ChatDetailClient() {
             </div>
           ) : (
             <p className="text-sm text-muted-foreground">
-              You do not have a project yet. Create one for this chat to
-              manage its settings.
+              {t('You do not have a project yet. Create one for this chat to manage its settings.')}
             </p>
           )}
           <DialogFooter className="flex-col sm:flex-row">
@@ -1225,7 +1225,7 @@ export function ChatDetailClient() {
               onClick={() => void handleCreateProjectForChat()}
               disabled={isAssigningProject}
             >
-              {isAssigningProject ? 'Creating…' : 'Create project'}
+              {t(isAssigningProject ? 'Creating…' : 'Create project')}
             </Button>
             {projectsResult?.data.length ? (
               <Button
@@ -1233,7 +1233,7 @@ export function ChatDetailClient() {
                 onClick={() => void handleAssignChatToProject()}
                 disabled={isAssigningProject || !selectedProjectId}
               >
-                {isAssigningProject ? 'Opening…' : 'Add chat and open settings'}
+                {t(isAssigningProject ? 'Opening…' : 'Add chat and open settings')}
               </Button>
             ) : null}
           </DialogFooter>
@@ -1243,10 +1243,9 @@ export function ChatDetailClient() {
       <Dialog open={isInviteOpen} onOpenChange={setIsInviteOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Invite to this chat</DialogTitle>
+            <DialogTitle>{t('Invite to this chat')}</DialogTitle>
             <DialogDescription>
-              Copy the chat link to share it. Access follows this chat’s{' '}
-              {currentChat?.privacy || 'private'} visibility.
+              {t('Copy the chat link to share it. Access follows this chat visibility.')}
             </DialogDescription>
           </DialogHeader>
           <div className="truncate rounded-md border bg-muted px-3 py-2 text-sm text-muted-foreground">
@@ -1258,11 +1257,11 @@ export function ChatDetailClient() {
               variant="outline"
               onClick={() => setIsInviteOpen(false)}
             >
-              Cancel
+              {t('Cancel')}
             </Button>
             <Button type="button" onClick={() => void handleCopyInviteLink()}>
               <Copy className="mr-2 size-4" />
-              Copy link
+              {t('Copy link')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1290,7 +1289,7 @@ export function ChatDetailClient() {
                     className="m-4 rounded-lg border border-destructive/30 bg-destructive/5 p-4"
                   >
                     <p className="text-sm font-medium text-destructive">
-                      Could not load this chat
+                      {t('Could not load this chat')}
                     </p>
                     <p className="mt-1 break-words text-sm text-muted-foreground">
                       {chatLoadError.message}
@@ -1301,10 +1300,10 @@ export function ChatDetailClient() {
                         variant="outline"
                         onClick={() => void refreshCurrentChat()}
                       >
-                        Retry
+                        {t('Retry')}
                       </Button>
                       <Button asChild size="sm" variant="ghost">
-                        <Link href="/chats">Back to chats</Link>
+                        <Link href="/chats">{t('Back to chats')}</Link>
                       </Button>
                     </div>
                   </div>

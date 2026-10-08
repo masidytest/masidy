@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { Lock } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
+import { useLocale } from '@/components/providers/locale-provider'
 
 interface RateLimitProps {
   isOpen: boolean
@@ -34,6 +35,7 @@ export function RateLimit({
   usageCount,
   maxUsage,
 }: RateLimitProps) {
+  const { t } = useLocale()
   const [secondsLeft, setSecondsLeft] = useState(getSecondsUntilMidnightUTC)
 
   useEffect(() => {
@@ -60,16 +62,16 @@ export function RateLimit({
         {/* Heading */}
         <div className="space-y-2">
           <h2 className="text-2xl font-bold text-foreground">
-            You&apos;ve reached your daily limit
+            {t("You've reached your daily limit")}
           </h2>
           <p className="text-muted-foreground text-sm">
-            Your generations reset at midnight UTC.
+            {t('Your generations reset at midnight UTC.')}
           </p>
         </div>
 
         {/* Countdown */}
         <div className="bg-muted rounded-lg px-6 py-4">
-          <p className="text-xs text-muted-foreground mb-1">Resets in</p>
+          <p className="text-xs text-muted-foreground mb-1">{t('Resets in')}</p>
           <p className="text-3xl font-mono font-semibold text-foreground tabular-nums">
             {formatCountdown(secondsLeft)}
           </p>
@@ -78,18 +80,18 @@ export function RateLimit({
         {/* Usage stat */}
         {usageCount !== undefined && maxUsage !== undefined && (
           <p className="text-sm text-muted-foreground">
-            {usageCount} / {maxUsage} generations today
+            {usageCount} / {maxUsage} {t('generations today')}
           </p>
         )}
 
         {/* CTAs */}
         <div className="flex flex-col gap-3">
           <Button asChild className="w-full">
-            <Link href="/register">Sign In / Create Account</Link>
+            <Link href="/register">{t('Sign In / Create Account')}</Link>
           </Button>
           {onClose && (
             <Button variant="outline" className="w-full" onClick={onClose}>
-              Dismiss
+              {t('Dismiss')}
             </Button>
           )}
         </div>

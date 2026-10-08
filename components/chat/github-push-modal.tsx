@@ -9,6 +9,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
+import { useLocale } from '@/components/providers/locale-provider'
 
 interface FileEntry {
   fileName: string
@@ -28,6 +29,7 @@ export function GithubPushModal({
   changedFiles,
   projectName = 'masidy-project',
 }: GithubPushModalProps) {
+  const { t } = useLocale()
   const handleDownloadZip = () => {
     // Build the file map for fflate zipSync
     const fileMap: Record<string, Uint8Array> = {}
@@ -53,7 +55,7 @@ export function GithubPushModal({
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold">
-            Export Project
+            {t('Export Project')}
           </DialogTitle>
         </DialogHeader>
 
@@ -62,11 +64,10 @@ export function GithubPushModal({
           <div className="rounded-lg border border-border p-4 space-y-3">
             <div className="flex items-center gap-2">
               <Download className="h-4 w-4 text-muted-foreground" />
-              <h3 className="font-semibold text-sm">Download ZIP</h3>
+              <h3 className="font-semibold text-sm">{t('Download ZIP')}</h3>
             </div>
             <p className="text-sm text-muted-foreground">
-              Download all project files as a ZIP archive. You can then open
-              them locally in any code editor.
+              {t('Download all project files as a ZIP archive. You can then open them locally in any code editor.')}
             </p>
             <Button
               onClick={handleDownloadZip}
@@ -74,11 +75,11 @@ export function GithubPushModal({
               className="w-full"
             >
               <Download className="h-4 w-4 mr-2" />
-              Download ZIP
+              {t('Download ZIP')}
             </Button>
             {changedFiles.length === 0 && (
               <p className="text-xs text-muted-foreground">
-                Generate a completed project version before exporting its files.
+                {t('Generate a completed project version before exporting its files.')}
               </p>
             )}
           </div>
@@ -87,12 +88,12 @@ export function GithubPushModal({
           <div className="rounded-lg border border-border p-4 space-y-3">
             <div className="flex items-center gap-2">
               <Github className="h-4 w-4 text-muted-foreground" />
-              <h3 className="font-semibold text-sm">Push to GitHub</h3>
+              <h3 className="font-semibold text-sm">{t('Push to GitHub')}</h3>
             </div>
             <ol className="text-sm text-muted-foreground space-y-1 list-decimal list-inside">
-              <li>Download the ZIP above</li>
+              <li>{t('Download the ZIP above')}</li>
               <li>
-                Create a new repository at{' '}
+                {t('Create a new repository at')}{' '}
                 <a
                   href="https://github.com/new"
                   target="_blank"
@@ -104,9 +105,9 @@ export function GithubPushModal({
                 </a>
               </li>
               <li>
-                Extract the ZIP and drag &amp; drop the files into your repo
+                {t('Extract the ZIP and drag & drop the files into your repo')}
               </li>
-              <li>Commit and push</li>
+              <li>{t('Commit and push')}</li>
             </ol>
             <Button variant="outline" className="w-full" asChild>
               <a
@@ -115,7 +116,7 @@ export function GithubPushModal({
                 rel="noopener noreferrer"
               >
                 <Github className="h-4 w-4 mr-2" />
-                Open GitHub
+                {t('Open GitHub')}
                 <ExternalLink className="h-3 w-3 ml-1" />
               </a>
             </Button>
@@ -124,7 +125,7 @@ export function GithubPushModal({
 
         <div className="flex justify-end mt-2">
           <Button variant="ghost" onClick={onClose}>
-            Close
+            {t('Close')}
           </Button>
         </div>
       </DialogContent>

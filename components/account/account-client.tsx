@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/components/ui/use-toast'
+import { useLocale } from '@/components/providers/locale-provider'
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json())
 
@@ -33,22 +34,24 @@ interface ChatItem {
   createdAt?: string
 }
 
-function timeAgo(dateStr: string): string {
+function timeAgo(dateStr: string, locale: 'en' | 'ar'): string {
   const diff = Date.now() - new Date(dateStr).getTime()
   const seconds = Math.floor(diff / 1000)
-  if (seconds < 60) return 'just now'
+  const relativeTime = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' })
+  if (seconds < 60) return relativeTime.format(0, 'second')
   const minutes = Math.floor(seconds / 60)
-  if (minutes < 60) return `${minutes}m ago`
+  if (minutes < 60) return relativeTime.format(-minutes, 'minute')
   const hours = Math.floor(minutes / 60)
-  if (hours < 24) return `${hours}h ago`
+  if (hours < 24) return relativeTime.format(-hours, 'hour')
   const days = Math.floor(hours / 24)
-  if (days < 30) return `${days}d ago`
+  if (days < 30) return relativeTime.format(-days, 'day')
   const months = Math.floor(days / 30)
-  if (months < 12) return `${months}mo ago`
-  return `${Math.floor(months / 12)}yr ago`
+  if (months < 12) return relativeTime.format(-months, 'month')
+  return relativeTime.format(-Math.floor(months / 12), 'year')
 }
 
 export function AccountClient() {
+  const { t, locale } = useLocale()
   const { data: session } = useSession()
   const { data: stats } = useSWR<AccountStats>('/api/account/stats', fetcher)
   const { data: chatsData } = useSWR<{ data: ChatItem[] }>(
@@ -81,9 +84,9 @@ export function AccountClient() {
       }
     } catch {
       toast({
-        title: 'Deletion failed',
+        title: t('Deletion failed'),
         description:
-          'Could not delete your account. Please try again or contact support.',
+          t('Could not delete your account. Please try again or contact support.'),
         variant: 'destructive',
       })
     } finally {
@@ -92,22 +95,24 @@ export function AccountClient() {
     }
   }
 
-  const memberSince = stats?.createdAt ? timeAgo(stats.createdAt) : null
+  const memberSince = stats?.createdAt
+    ? timeAgo(stats.createdAt, locale)
+    : null
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-10 space-y-10">
       {/* Profile section */}
       <section>
-        <h2 className="text-lg font-semibold mb-4">Profile</h2>
+        <h2 className="text-lg font-semibold mb-4">{t('Profile')}</h2>
         <div className="rounded-lg border border-border bg-card p-5 space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">Email</span>
+            <span className="text-sm text-muted-foreground">{t('Email')}</span>
             <span className="text-sm font-medium">
               {session?.user?.email ?? '—'}
             </span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">Account type</span>
+            <span className="text-sm text-muted-foreground">{t('Account type')}</span>
             <span
               className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
                 isGuest
@@ -115,13 +120,13 @@ export function AccountClient() {
                   : 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300'
               }`}
             >
-              {isGuest ? 'Guest' : 'Regular'}
+              {isGuest ? t('Guest') : t('Regular')}
             </span>
           </div>
           {memberSince && (
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">
-                Member since
+                {t('Member since')}
               </span>
               <span className="text-sm">{memberSince}</span>
             </div>
@@ -131,12 +136,12 @@ export function AccountClient() {
 
       {/* Usage stats */}
       <section>
-        <h2 className="text-lg font-semibold mb-4">Usage</h2>
+        <h2 className="text-lg font-semibold mb-4">{t('Usage')}</h2>
         <div className="rounded-lg border border-border bg-card p-5 space-y-4">
           <div>
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm text-muted-foreground">
-                Generations today
+                {t('Generations today')}
               </span>
               <span className="text-sm font-medium">
                 {todayCount} / {maxMessages}
@@ -151,7 +156,7 @@ export function AccountClient() {
           </div>
           <div className="flex items-center justify-between">
             <span className="text-sm text-muted-foreground">
-              Total generations
+              {t('Total generations')}
             </span>
             <span className="text-sm font-medium">
               {stats?.totalCount ?? '—'}
@@ -163,7 +168,7 @@ export function AccountClient() {
       {/* Chat history */}
       {recentChats.length > 0 && (
         <section>
-          <h2 className="text-lg font-semibold mb-4">Recent Chats</h2>
+          <h2 className="text-lg font-semibold mb-4">{t('Recent Chats')}</h2>
           <div className="flex flex-col gap-1">
             {recentChats.map((chat) => {
               const firstMsg =
@@ -181,7 +186,7 @@ export function AccountClient() {
                 >
                   <span className="truncate max-w-[70%]">{truncated}</span>
                   <span className="text-xs text-muted-foreground shrink-0 ml-2">
-                    {ts ? timeAgo(ts) : ''}
+                    {ts ? timeAgo(ts, locale) : ''}
                   </span>
                 </Link>
               )
@@ -194,19 +199,18 @@ export function AccountClient() {
       {!isGuest && (
         <section>
           <h2 className="text-lg font-semibold text-destructive mb-4">
-            Danger Zone
+            {t('Danger Zone')}
           </h2>
           <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-5">
             <p className="text-sm text-muted-foreground mb-4">
-              Permanently delete your account and all associated data. This
-              action cannot be undone.
+              {t('Permanently delete your account and all associated data. This action cannot be undone.')}
             </p>
             <Button
               variant="destructive"
               size="sm"
               onClick={() => setShowDeleteDialog(true)}
             >
-              Delete Account
+              {t('Delete Account')}
             </Button>
           </div>
         </section>
@@ -216,11 +220,9 @@ export function AccountClient() {
       <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Delete Account</DialogTitle>
+            <DialogTitle>{t('Delete Account')}</DialogTitle>
             <DialogDescription>
-              Are you sure you want to permanently delete your account? All your
-              chat history and data will be removed. This action cannot be
-              undone.
+              {t('Are you sure you want to permanently delete your account? All your chat history and data will be removed. This action cannot be undone.')}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -229,14 +231,14 @@ export function AccountClient() {
               onClick={() => setShowDeleteDialog(false)}
               disabled={isDeleting}
             >
-              Cancel
+              {t('Cancel')}
             </Button>
             <Button
               variant="destructive"
               onClick={handleDeleteAccount}
               disabled={isDeleting}
             >
-              {isDeleting ? 'Deleting…' : 'Yes, delete my account'}
+              {isDeleting ? t('Deleting…') : t('Yes, delete my account')}
             </Button>
           </DialogFooter>
         </DialogContent>

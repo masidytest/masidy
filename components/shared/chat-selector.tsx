@@ -45,6 +45,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useToast } from '@/components/ui/use-toast'
 import { mutate } from 'swr'
+import { useLocale } from '@/components/providers/locale-provider'
 
 interface Chat {
   id: string
@@ -102,6 +103,7 @@ const getPrivacyDisplayName = (privacy: string) => {
 }
 
 export function ChatSelector() {
+  const { t } = useLocale()
   const router = useRouter()
   const pathname = usePathname()
   const { data: session } = useSession()
@@ -419,13 +421,13 @@ export function ChatSelector() {
             className="w-fit min-w-[150px] max-w-[250px]"
             size="sm"
           >
-            <SelectValue placeholder="Select chat">
+            <SelectValue placeholder={t('Select chat')}>
               <div className="flex items-center gap-2">
                 <MessageSquare className="h-4 w-4" />
                 <span className="truncate">
                   {currentChat
                     ? getChatDisplayName(currentChat)
-                    : 'Select chat'}
+                    : t('Select chat')}
                 </span>
               </div>
             </SelectValue>
@@ -442,7 +444,7 @@ export function ChatSelector() {
               ))
             ) : (
               <div className="px-2 py-1.5 text-sm text-muted-foreground">
-                No chats yet
+                {t('No chats yet')}
               </div>
             )}
           </SelectContent>
@@ -465,7 +467,7 @@ export function ChatSelector() {
                 }
               >
                 <MoreHorizontal className="h-4 w-4" />
-                <span className="sr-only">Project menu</span>
+                <span className="sr-only">{t('Project menu')}</span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
@@ -476,7 +478,7 @@ export function ChatSelector() {
                 }}
               >
                 <Edit2 className="mr-2 h-4 w-4" />
-                Rename
+                {t('Rename')}
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={handleToggleFavorite}
@@ -486,16 +488,16 @@ export function ChatSelector() {
                   className={`mr-2 h-4 w-4 ${currentChat.favorite ? 'fill-current' : ''}`}
                 />
                 {currentChat.favorite
-                  ? 'Remove from Favorites'
-                  : 'Add to Favorites'}
+                  ? t('Remove from Favorites')
+                  : t('Add to Favorites')}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => void handleCopyChatLink()}>
                 <Copy className="mr-2 h-4 w-4" />
-                Copy Link
+                {t('Copy Link')}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => setIsInviteDialogOpen(true)}>
                 <Share2 className="mr-2 h-4 w-4" />
-                Invite
+                {t('Invite')}
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => {
@@ -510,7 +512,7 @@ export function ChatSelector() {
                 }
               >
                 {getPrivacyIcon(currentChat.privacy || 'private')}
-                <span className="ml-2">Chat visibility</span>
+                <span className="ml-2">{t('Chat visibility')}</span>
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => setIsDuplicateDialogOpen(true)}
@@ -522,7 +524,7 @@ export function ChatSelector() {
                 }
               >
                 <Copy className="mr-2 h-4 w-4" />
-                Duplicate…
+                {t('Duplicate…')}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
@@ -533,7 +535,7 @@ export function ChatSelector() {
                 }
               >
                 <Download className="mr-2 h-4 w-4" />
-                Download ZIP
+                {t('Download ZIP')}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               {currentChat.projectId ? (
@@ -542,13 +544,13 @@ export function ChatSelector() {
                     href={`/projects/${encodeURIComponent(currentChat.projectId)}`}
                   >
                     <ExternalLink className="mr-2 h-4 w-4" />
-                    Settings
+                    {t('Settings')}
                   </Link>
                 </DropdownMenuItem>
               ) : (
                 <DropdownMenuItem disabled>
                   <ExternalLink className="mr-2 h-4 w-4" />
-                  Settings
+                  {t('Settings')}
                 </DropdownMenuItem>
               )}
               <DropdownMenuSeparator />
@@ -563,7 +565,7 @@ export function ChatSelector() {
                 className="text-destructive focus:text-destructive"
               >
                 <Trash2 className="mr-2 h-4 w-4" />
-                Delete Chat
+                {t('Delete Chat')}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -573,11 +575,10 @@ export function ChatSelector() {
       <Dialog open={isInviteDialogOpen} onOpenChange={setIsInviteDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Invite to chat</DialogTitle>
+            <DialogTitle>{t('Invite to chat')}</DialogTitle>
             <DialogDescription>
-              Copy the chat link to share it. Access follows the chat’s{' '}
-              {getPrivacyDisplayName(currentChat?.privacy || 'private')}{' '}
-              visibility.
+              {t('Copy the chat link to share it. Access follows this chat visibility:')}{' '}
+              {t(getPrivacyDisplayName(currentChat?.privacy || 'private'))}
             </DialogDescription>
           </DialogHeader>
           <div className="truncate rounded-md border bg-muted px-3 py-2 text-sm text-muted-foreground">
@@ -590,7 +591,7 @@ export function ChatSelector() {
               variant="outline"
               onClick={() => setIsInviteDialogOpen(false)}
             >
-              Cancel
+              {t('Cancel')}
             </Button>
             <Button
               onClick={() => {
@@ -600,7 +601,7 @@ export function ChatSelector() {
               }}
             >
               <Copy className="mr-2 h-4 w-4" />
-              Copy Link
+              {t('Copy Link')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -610,14 +611,14 @@ export function ChatSelector() {
       <Dialog open={isRenameDialogOpen} onOpenChange={setIsRenameDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Rename Chat</DialogTitle>
+            <DialogTitle>{t('Rename Chat')}</DialogTitle>
             <DialogDescription>
-              Enter a new name for this chat.
+              {t('Enter a new name for this chat.')}
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">
             <Input
-              placeholder="Chat name"
+              placeholder={t('Chat name')}
               value={renameChatName}
               onChange={(e) => setRenameChatName(e.target.value)}
               onKeyDown={(e) => {
@@ -637,13 +638,13 @@ export function ChatSelector() {
               }}
               disabled={isRenamingChat}
             >
-              Cancel
+              {t('Cancel')}
             </Button>
             <Button
               onClick={handleRenameChat}
               disabled={isRenamingChat || !renameChatName.trim()}
             >
-              {isRenamingChat ? 'Renaming...' : 'Rename Chat'}
+              {isRenamingChat ? t('Renaming...') : t('Rename Chat')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -653,10 +654,9 @@ export function ChatSelector() {
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Delete Chat</DialogTitle>
+            <DialogTitle>{t('Delete Chat')}</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete this chat? This action cannot be
-              undone and will permanently remove the chat and all its messages.
+              {t('Are you sure you want to delete this chat? This action cannot be undone and will permanently remove the chat and all its messages.')}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -665,14 +665,14 @@ export function ChatSelector() {
               onClick={() => setIsDeleteDialogOpen(false)}
               disabled={isDeletingChat}
             >
-              Cancel
+              {t('Cancel')}
             </Button>
             <Button
               variant="destructive"
               onClick={handleDeleteChat}
               disabled={isDeletingChat}
             >
-              {isDeletingChat ? 'Deleting...' : 'Delete Chat'}
+              {isDeletingChat ? t('Deleting...') : t('Delete Chat')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -685,10 +685,9 @@ export function ChatSelector() {
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Duplicate Chat</DialogTitle>
+            <DialogTitle>{t('Duplicate Chat')}</DialogTitle>
             <DialogDescription>
-              This will create a copy of the current chat. You'll be redirected
-              to the new chat once it's created.
+              {t("This will create a copy of the current chat. You'll be redirected to the new chat once it's created.")}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -697,10 +696,10 @@ export function ChatSelector() {
               onClick={() => setIsDuplicateDialogOpen(false)}
               disabled={isDuplicatingChat}
             >
-              Cancel
+              {t('Cancel')}
             </Button>
             <Button onClick={handleDuplicateChat} disabled={isDuplicatingChat}>
-              {isDuplicatingChat ? 'Duplicating...' : 'Duplicate Chat'}
+              {isDuplicatingChat ? t('Duplicating...') : t('Duplicate Chat')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -713,9 +712,9 @@ export function ChatSelector() {
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Change Chat Visibility</DialogTitle>
+            <DialogTitle>{t('Change Chat Visibility')}</DialogTitle>
             <DialogDescription>
-              Choose who can see and access this chat.
+              {t('Choose who can see and access this chat.')}
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">
@@ -729,7 +728,7 @@ export function ChatSelector() {
                 <SelectValue>
                   <div className="flex items-center gap-2">
                     {getPrivacyIcon(selectedVisibility)}
-                    <span>{getPrivacyDisplayName(selectedVisibility)}</span>
+                    <span>{t(getPrivacyDisplayName(selectedVisibility))}</span>
                   </div>
                 </SelectValue>
               </SelectTrigger>
@@ -738,9 +737,9 @@ export function ChatSelector() {
                   <div className="flex items-center gap-2">
                     <EyeOff className="h-4 w-4" />
                     <div>
-                      <div>Private</div>
+                      <div>{t('Private')}</div>
                       <div className="text-xs text-muted-foreground">
-                        Only you can see this chat
+                        {t('Only you can see this chat')}
                       </div>
                     </div>
                   </div>
@@ -749,9 +748,9 @@ export function ChatSelector() {
                   <div className="flex items-center gap-2">
                     <Eye className="h-4 w-4" />
                     <div>
-                      <div>Public</div>
+                      <div>{t('Public')}</div>
                       <div className="text-xs text-muted-foreground">
-                        Anyone can see this chat
+                        {t('Anyone can see this chat')}
                       </div>
                     </div>
                   </div>
@@ -760,9 +759,9 @@ export function ChatSelector() {
                   <div className="flex items-center gap-2">
                     <Users className="h-4 w-4" />
                     <div>
-                      <div>Team</div>
+                      <div>{t('Team')}</div>
                       <div className="text-xs text-muted-foreground">
-                        Team members can see this chat
+                        {t('Team members can see this chat')}
                       </div>
                     </div>
                   </div>
@@ -771,9 +770,9 @@ export function ChatSelector() {
                   <div className="flex items-center gap-2">
                     <Users className="h-4 w-4" />
                     <div>
-                      <div>Team Edit</div>
+                      <div>{t('Team Edit')}</div>
                       <div className="text-xs text-muted-foreground">
-                        Team members can see and edit this chat
+                        {t('Team members can see and edit this chat')}
                       </div>
                     </div>
                   </div>
@@ -782,9 +781,9 @@ export function ChatSelector() {
                   <div className="flex items-center gap-2">
                     <Lock className="h-4 w-4" />
                     <div>
-                      <div>Unlisted</div>
+                      <div>{t('Unlisted')}</div>
                       <div className="text-xs text-muted-foreground">
-                        Only people with the link can see this chat
+                        {t('Only people with the link can see this chat')}
                       </div>
                     </div>
                   </div>
@@ -798,13 +797,15 @@ export function ChatSelector() {
               onClick={() => setIsVisibilityDialogOpen(false)}
               disabled={isChangingVisibility}
             >
-              Cancel
+              {t('Cancel')}
             </Button>
             <Button
               onClick={handleChangeVisibility}
               disabled={isChangingVisibility}
             >
-              {isChangingVisibility ? 'Changing...' : 'Change Visibility'}
+              {isChangingVisibility
+                ? t('Changing...')
+                : t('Change Visibility')}
             </Button>
           </DialogFooter>
         </DialogContent>

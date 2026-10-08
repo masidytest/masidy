@@ -11,6 +11,7 @@ import { StreamingMessage } from '@v0-sdk/react'
 import { AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { FollowUpSuggestions } from '@/components/chat/follow-up-suggestions'
+import { useLocale } from '@/components/providers/locale-provider'
 
 // Error boundary to catch render crashes without killing the whole tree
 class StreamErrorBoundary extends Component<
@@ -32,7 +33,7 @@ class StreamErrorBoundary extends Component<
     if (this.state.error) {
       return (
         <div className="my-2 px-3 py-2 rounded border border-yellow-200 bg-yellow-50 dark:border-yellow-800 dark:bg-yellow-950/30 text-xs text-yellow-800 dark:text-yellow-200">
-          Render error: {this.state.error}
+          {this.state.error}
         </div>
       )
     }
@@ -85,6 +86,7 @@ export function ChatMessages({
   isStreaming,
   onFollowUpClick,
 }: ChatMessagesProps) {
+  const { t } = useLocale()
   const streamingStartedRef = useRef(false)
 
   // Reset the streaming started flag when a new message starts loading
@@ -122,11 +124,11 @@ export function ChatMessages({
                     <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm text-red-900 dark:text-red-100">
-                        {msg.error?.message || msg.content}
+                        {t(msg.error?.message || String(msg.content))}
                       </p>
                       {msg.error?.code && (
                         <p className="text-xs text-red-700 dark:text-red-300 mt-1">
-                          Error code: {msg.error.code}
+                          {t('Error code')}: {msg.error.code}
                         </p>
                       )}
                       {msg.error?.retryable && onRetry && (
@@ -136,7 +138,7 @@ export function ChatMessages({
                           size="sm"
                           className="mt-3 border-red-300 hover:bg-red-100 dark:border-red-800 dark:hover:bg-red-900"
                         >
-                          Try Again
+                          {t('Try Again')}
                         </Button>
                       )}
                     </div>

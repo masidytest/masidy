@@ -20,12 +20,14 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
+import { useLocale } from '@/components/providers/locale-provider'
 
 interface ChatMenuProps {
   chatId: string
 }
 
 export function ChatMenu({ chatId }: ChatMenuProps) {
+  const { t } = useLocale()
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [isDuplicateDialogOpen, setIsDuplicateDialogOpen] = useState(false)
@@ -96,7 +98,7 @@ export function ChatMenu({ chatId }: ChatMenuProps) {
             disabled={isLoading}
           >
             <MoreHorizontal className="h-4 w-4" />
-            <span className="sr-only">Open chat menu</span>
+            <span className="sr-only">{t('Open chat menu')}</span>
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
@@ -106,7 +108,7 @@ export function ChatMenu({ chatId }: ChatMenuProps) {
               className="flex items-center"
             >
               <ExternalLink className="mr-2 h-4 w-4" />
-              Open in Masidy
+              {t('Open in Masidy')}
             </a>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
@@ -115,7 +117,7 @@ export function ChatMenu({ chatId }: ChatMenuProps) {
             disabled={isLoading}
           >
             <Copy className="mr-2 h-4 w-4" />
-            Duplicate Chat
+            {t('Duplicate Chat')}
           </DropdownMenuItem>
           <DropdownMenuItem
             onClick={() => setIsDeleteDialogOpen(true)}
@@ -123,7 +125,7 @@ export function ChatMenu({ chatId }: ChatMenuProps) {
             variant="destructive"
           >
             <Trash2 className="mr-2 h-4 w-4" />
-            Delete Chat
+            {t('Delete Chat')}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -135,10 +137,9 @@ export function ChatMenu({ chatId }: ChatMenuProps) {
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Duplicate Chat</DialogTitle>
+            <DialogTitle>{t('Duplicate Chat')}</DialogTitle>
             <DialogDescription>
-              This will create a copy of the current chat. You'll be redirected
-              to the new chat once it's created.
+              {t("This will create a copy of the current chat. You'll be redirected to the new chat once it's created.")}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -147,10 +148,10 @@ export function ChatMenu({ chatId }: ChatMenuProps) {
               onClick={() => setIsDuplicateDialogOpen(false)}
               disabled={isLoading}
             >
-              Cancel
+              {t('Cancel')}
             </Button>
             <Button onClick={handleDuplicateChat} disabled={isLoading}>
-              {isLoading ? 'Duplicating...' : 'Duplicate Chat'}
+              {isLoading ? t('Duplicating...') : t('Duplicate Chat')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -160,10 +161,9 @@ export function ChatMenu({ chatId }: ChatMenuProps) {
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Delete Chat</DialogTitle>
+            <DialogTitle>{t('Delete Chat')}</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete this chat? This action cannot be
-              undone and will permanently remove the chat and all its messages.
+              {t('Are you sure you want to delete this chat? This action cannot be undone and will permanently remove the chat and all its messages.')}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -172,14 +172,14 @@ export function ChatMenu({ chatId }: ChatMenuProps) {
               onClick={() => setIsDeleteDialogOpen(false)}
               disabled={isLoading}
             >
-              Cancel
+              {t('Cancel')}
             </Button>
             <Button
               variant="destructive"
               onClick={handleDeleteChat}
               disabled={isLoading}
             >
-              {isLoading ? 'Deleting...' : 'Delete Chat'}
+              {isLoading ? t('Deleting...') : t('Delete Chat')}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -42,6 +42,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { entitlementsByUserType } from '@/lib/entitlements'
+import { useLocale } from '@/components/providers/locale-provider'
 
 interface UserNavProps {
   session: Session | null
@@ -90,6 +91,7 @@ const avatarColors = [
 ]
 
 export function UserNav({ session, collapsed = false }: UserNavProps) {
+  const { locale, setLocale, t } = useLocale()
   const [mounted, setMounted] = useState(false)
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false)
   const [feedback, setFeedback] = useState('')
@@ -138,13 +140,13 @@ export function UserNav({ session, collapsed = false }: UserNavProps) {
             ? 'relative h-8 w-8 rounded-full p-0'
             : 'h-9 w-full justify-start gap-2 rounded-md px-2'
         }
-        aria-label="Sign in"
-        title={collapsed ? 'Sign in' : undefined}
+        aria-label={t('Sign in')}
+        title={collapsed ? t('Sign in') : undefined}
       >
         <Link href="/login">
           <LogIn className="size-4 shrink-0" />
           {!collapsed && (
-            <span className="text-sm font-medium">Sign in</span>
+            <span className="text-sm font-medium">{t('Sign in')}</span>
           )}
         </Link>
       </Button>
@@ -162,7 +164,7 @@ export function UserNav({ session, collapsed = false }: UserNavProps) {
                 ? 'relative h-8 w-8 rounded-full p-0'
                 : 'h-9 w-full justify-start gap-2 rounded-md px-2'
             }
-            aria-label="Open account menu"
+            aria-label={t('Open account menu')}
             title={collapsed ? userLabel : undefined}
           >
             <Avatar className="size-8 shrink-0">
@@ -205,20 +207,20 @@ export function UserNav({ session, collapsed = false }: UserNavProps) {
           <DropdownMenuItem asChild>
             <Link href="/projects">
               <LayoutDashboard className="mr-2 size-4" />
-              Dashboard
+              {t('Dashboard')}
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
             <a href="/account">
               <Settings className="mr-2 size-4" />
-              Settings
+              {t('Settings')}
             </a>
           </DropdownMenuItem>
           {session?.user?.id && (
             <DropdownMenuItem asChild>
               <a href="/account" className="flex w-full items-center">
                 <Gauge className="mr-2 size-4" />
-                <span>Usage</span>
+                <span>{t('Usage')}</span>
                 <span className="ml-auto text-xs text-muted-foreground">
                   {usageLabel}
                 </span>
@@ -232,17 +234,17 @@ export function UserNav({ session, collapsed = false }: UserNavProps) {
             }}
           >
             <MessageSquareText className="mr-2 size-4" />
-            Feedback
+            {t('Feedback')}
           </DropdownMenuItem>
           <DropdownMenuLabel className="flex items-center justify-between font-normal">
-            <span>Theme</span>
+            <span>{t('Theme')}</span>
             <div className="flex items-center rounded-md border p-0.5">
               <Button
                 type="button"
                 variant={theme === 'system' ? 'secondary' : 'ghost'}
                 size="icon"
                 className="size-7"
-                aria-label="Use system theme"
+                aria-label={t('Use system theme')}
                 aria-pressed={theme === 'system'}
                 onClick={() => setTheme('system')}
               >
@@ -253,7 +255,7 @@ export function UserNav({ session, collapsed = false }: UserNavProps) {
                 variant={theme === 'light' ? 'secondary' : 'ghost'}
                 size="icon"
                 className="size-7"
-                aria-label="Use light theme"
+                aria-label={t('Use light theme')}
                 aria-pressed={theme === 'light'}
                 onClick={() => setTheme('light')}
               >
@@ -264,7 +266,7 @@ export function UserNav({ session, collapsed = false }: UserNavProps) {
                 variant={theme === 'dark' ? 'secondary' : 'ghost'}
                 size="icon"
                 className="size-7"
-                aria-label="Use dark theme"
+                aria-label={t('Use dark theme')}
                 aria-pressed={theme === 'dark'}
                 onClick={() => setTheme('dark')}
               >
@@ -273,26 +275,43 @@ export function UserNav({ session, collapsed = false }: UserNavProps) {
             </div>
           </DropdownMenuLabel>
           <DropdownMenuSub>
-            <DropdownMenuSubTrigger>More</DropdownMenuSubTrigger>
+            <DropdownMenuSubTrigger>{t('More')}</DropdownMenuSubTrigger>
             <DropdownMenuSubContent>
               {moreLinks.map(({ label, href, icon: Icon }) => (
                 <DropdownMenuItem key={label} asChild>
                   <a href={href} target="_blank" rel="noopener noreferrer">
                     <Icon className="mr-2 size-4" />
-                    {label}
+                    {t(label)}
                   </a>
                 </DropdownMenuItem>
               ))}
+            </DropdownMenuSubContent>
+          </DropdownMenuSub>
+          <DropdownMenuSub>
+            <DropdownMenuSubTrigger>{t('Language')}</DropdownMenuSubTrigger>
+            <DropdownMenuSubContent>
+              <DropdownMenuItem
+                aria-current={locale === 'en' ? 'true' : undefined}
+                onSelect={() => setLocale('en')}
+              >
+                English{locale === 'en' ? ' ✓' : ''}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                aria-current={locale === 'ar' ? 'true' : undefined}
+                onSelect={() => setLocale('ar')}
+              >
+                العربية{locale === 'ar' ? ' ✓' : ''}
+              </DropdownMenuItem>
             </DropdownMenuSubContent>
           </DropdownMenuSub>
           <DropdownMenuSeparator />
           {isGuest && (
             <>
               <DropdownMenuItem asChild>
-                <a href="/register">Create Account</a>
+                <a href="/register">{t('Create Account')}</a>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <a href="/login">Sign In</a>
+                <a href="/login">{t('Sign in')}</a>
               </DropdownMenuItem>
             </>
           )}
@@ -302,7 +321,7 @@ export function UserNav({ session, collapsed = false }: UserNavProps) {
             }}
           >
             <LogOut className="mr-2 size-4" />
-            Sign Out
+            {t('Sign out')}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -310,18 +329,19 @@ export function UserNav({ session, collapsed = false }: UserNavProps) {
       <Dialog open={isFeedbackOpen} onOpenChange={setIsFeedbackOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Give feedback</DialogTitle>
+            <DialogTitle>{t('Give feedback')}</DialogTitle>
             <DialogDescription>
-              Share what went well or how we can improve Masidy. Submit opens a
-              GitHub feedback draft for you to review.
+              {t(
+                'Share what went well or how we can improve Masidy. Submit opens a GitHub feedback draft for you to review.',
+              )}
             </DialogDescription>
           </DialogHeader>
           <Textarea
             autoFocus
             value={feedback}
             onChange={(event) => setFeedback(event.target.value)}
-            placeholder="Tell us what you think…"
-            aria-label="Your feedback"
+            placeholder={t('Tell us what you think…')}
+            aria-label={t('Your feedback')}
             className="min-h-32"
           />
           <DialogFooter>
@@ -330,7 +350,7 @@ export function UserNav({ session, collapsed = false }: UserNavProps) {
               variant="outline"
               onClick={() => setIsFeedbackOpen(false)}
             >
-              Cancel
+              {t('Cancel')}
             </Button>
             <Button
               type="button"
@@ -344,7 +364,7 @@ export function UserNav({ session, collapsed = false }: UserNavProps) {
                 setIsFeedbackOpen(false)
               }}
             >
-              Submit
+              {t('Submit')}
             </Button>
           </DialogFooter>
         </DialogContent>

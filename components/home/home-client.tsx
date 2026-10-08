@@ -24,6 +24,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { UserNav } from '@/components/user-nav'
 import { MobileMenu } from '@/components/shared/mobile-menu'
+import { LanguageSwitcher } from '@/components/shared/language-switcher'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -54,6 +55,7 @@ import { ChatInput } from '@/components/chat/chat-input'
 import { PreviewPanel } from '@/components/chat/preview-panel'
 import { BrandMark } from '@/components/brand-mark'
 import { LegalFooter } from '@/components/legal/legal-footer'
+import { useLocale } from '@/components/providers/locale-provider'
 import { ResizableLayout } from '@/components/shared/resizable-layout'
 import { BottomToolbar } from '@/components/shared/bottom-toolbar'
 import { RateLimit } from '@/components/rate-limit'
@@ -153,6 +155,7 @@ const modelLabels = {
 } as const
 
 export function HomeClient() {
+  const { t } = useLocale()
   const { toast } = useToast()
   const [message, setMessage] = useState('')
   const [selectedResourceIds, setSelectedResourceIds] = useState<string[]>([])
@@ -1066,36 +1069,37 @@ export function HomeClient() {
         <div className="mx-auto grid h-14 max-w-7xl grid-cols-[1fr_auto_1fr] items-center px-4 sm:px-6">
           <Link
             href="/"
-            aria-label="Masidy home"
-            title="Masidy"
+            aria-label={t('Masidy home')}
+            title={t('Masidy')}
             className="w-fit rounded-full transition-opacity hover:opacity-80"
           >
             <BrandMark className="size-8 rounded-full" />
           </Link>
           <nav
-            aria-label="Landing page navigation"
+            aria-label={t('Landing page navigation')}
             className="hidden items-center gap-7 text-sm text-muted-foreground lg:flex"
           >
             <a href="#templates" className="transition-colors hover:text-foreground">
-              Templates
+              {t('Templates')}
             </a>
             <Link
               href="/projects"
               className="transition-colors hover:text-foreground"
             >
-              Projects
+              {t('Projects')}
             </Link>
             <Link
               href="/design-systems"
               className="transition-colors hover:text-foreground"
             >
-              Design systems
+              {t('Design systems')}
             </Link>
             <a href="#faq" className="transition-colors hover:text-foreground">
-              FAQ
+              {t('FAQ')}
             </a>
           </nav>
           <div className="flex items-center justify-self-end gap-1 sm:gap-2">
+            <LanguageSwitcher />
             {session?.user ? (
               <UserNav session={session} collapsed />
             ) : (
@@ -1106,14 +1110,14 @@ export function HomeClient() {
                   size="sm"
                   className="hidden border-border bg-transparent text-foreground hover:bg-accent hover:text-accent-foreground sm:inline-flex"
                 >
-                  <Link href="/login">Log in</Link>
+                  <Link href="/login">{t('Log in')}</Link>
                 </Button>
                 <Button
                   asChild
                   size="sm"
                   className="bg-primary text-primary-foreground hover:bg-primary/90"
                 >
-                  <Link href="/register">Sign up</Link>
+                  <Link href="/register">{t('Sign up')}</Link>
                 </Button>
               </>
             )}
@@ -1126,10 +1130,10 @@ export function HomeClient() {
         <section className="px-4 pb-20 pt-16 sm:px-6 sm:pt-20">
           <div className="mx-auto max-w-3xl text-center">
             <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-5xl">
-              What do you want to create?
+              {t('What do you want to create?')}
             </h1>
             <p className="mt-3 text-sm text-muted-foreground sm:text-base">
-              Describe an idea and watch it become a working app.
+              {t('Describe an idea and watch it become a working app.')}
             </p>
 
             <div id="builder" className="mx-auto mt-6 max-w-3xl scroll-mt-20">
@@ -1150,7 +1154,7 @@ export function HomeClient() {
                   ref={textareaRef}
                   onChange={(e) => setMessage(e.target.value)}
                   value={message}
-                  placeholder="Describe what you want to build..."
+                  placeholder={t('Describe what you want to build...')}
                   className="min-h-[88px] px-4 py-4 text-base text-foreground placeholder:text-muted-foreground"
                   disabled={isLoading}
                   onKeyDown={(e) => {
@@ -1178,15 +1182,15 @@ export function HomeClient() {
                           size="sm"
                           disabled={isLoading}
                           className="text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-                          aria-label={`Select model, current model: ${modelLabels[selectedModel]}`}
+                          aria-label={`${t('Select model, current model')}: ${t(modelLabels[selectedModel])}`}
                         >
                           <Sparkles className="size-4" />
-                          {modelLabels[selectedModel]}
+                          {t(modelLabels[selectedModel])}
                           <ChevronDown className="size-3.5 text-muted-foreground" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="start" className="w-48">
-                        <DropdownMenuLabel>Choose a model</DropdownMenuLabel>
+                        <DropdownMenuLabel>{t('Choose a model')}</DropdownMenuLabel>
                         <DropdownMenuSeparator />
                         <DropdownMenuRadioGroup
                           value={selectedModel}
@@ -1201,16 +1205,16 @@ export function HomeClient() {
                           }
                         >
                           <DropdownMenuRadioItem value="default">
-                            Default model
+                            {t('Default model')}
                           </DropdownMenuRadioItem>
                           <DropdownMenuRadioItem value="v0-mini">
-                            Fast
+                            {t('Fast')}
                           </DropdownMenuRadioItem>
                           <DropdownMenuRadioItem value="v0-pro">
-                            Balanced
+                            {t('Balanced')}
                           </DropdownMenuRadioItem>
                           <DropdownMenuRadioItem value="v0-max">
-                            Advanced
+                            {t('Advanced')}
                           </DropdownMenuRadioItem>
                         </DropdownMenuRadioGroup>
                       </DropdownMenuContent>
@@ -1225,18 +1229,18 @@ export function HomeClient() {
                             disabled={isLoading}
                             className="text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                             aria-label={`Select project, current project: ${
-                              selectedProject?.name || 'No project'
+                              selectedProject?.name || t('No project')
                             }`}
                           >
                             <FolderKanban className="size-4" />
                             <span className="max-w-36 truncate">
-                              {selectedProject?.name || 'Project'}
+                              {selectedProject?.name || t('Project')}
                             </span>
                             <ChevronDown className="size-3.5 text-muted-foreground" />
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="start" className="w-64">
-                          <DropdownMenuLabel>Add to project</DropdownMenuLabel>
+                          <DropdownMenuLabel>{t('Add to project')}</DropdownMenuLabel>
                           <DropdownMenuSeparator />
                           <DropdownMenuRadioGroup
                             value={selectedProjectId || '__none'}
@@ -1247,7 +1251,7 @@ export function HomeClient() {
                             }
                           >
                             <DropdownMenuRadioItem value="__none">
-                              No project
+                              {t('No project')}
                             </DropdownMenuRadioItem>
                             {projects.map((project) => (
                               <DropdownMenuRadioItem
@@ -1262,7 +1266,7 @@ export function HomeClient() {
                             <>
                               <DropdownMenuSeparator />
                               <DropdownMenuLabel className="font-normal text-muted-foreground">
-                                Create a project from the Projects page first.
+                                {t('Create a project from the Projects page first.')}
                               </DropdownMenuLabel>
                             </>
                           )}
@@ -1278,18 +1282,18 @@ export function HomeClient() {
                           disabled={isLoading}
                           className="text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                           aria-label={`Select design system, current design system: ${
-                            selectedDesignSystem?.name || 'Default'
+                            selectedDesignSystem?.name || t('Default')
                           }`}
                         >
                           <Layers3 className="size-4" />
                           <span className="max-w-32 truncate">
-                            {selectedDesignSystem?.name || 'Design'}
+                            {selectedDesignSystem?.name || t('Design')}
                           </span>
                           <ChevronDown className="size-3.5 text-muted-foreground" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="start" className="w-56">
-                        <DropdownMenuLabel>Design system</DropdownMenuLabel>
+                        <DropdownMenuLabel>{t('Design system')}</DropdownMenuLabel>
                         <DropdownMenuSeparator />
                         <DropdownMenuRadioGroup
                           value={selectedDesignSystem?.id || '__default'}
@@ -1302,7 +1306,7 @@ export function HomeClient() {
                           }}
                         >
                           <DropdownMenuRadioItem value="__default">
-                            Default design
+                            {t('Default design')}
                           </DropdownMenuRadioItem>
                           {builtInDesignSystems.map((system) => (
                             <DropdownMenuRadioItem
@@ -1349,11 +1353,11 @@ export function HomeClient() {
               </PromptInput>
               {(selectedProjectId || selectedDesignSystem) && (
                 <p className="mt-2 text-xs text-muted-foreground">
-                  Selected project and design system apply to this new chat.
+                  {t('Selected project and design system apply to this new chat.')}
                 </p>
               )}
               <p className="mt-2 text-right text-xs text-muted-foreground">
-                Press ⌘↵ or Ctrl+Enter to send
+                {t('Press ⌘↵ or Ctrl+Enter to send')}
               </p>
             </div>
 
@@ -1369,7 +1373,7 @@ export function HomeClient() {
                   type="button"
                   className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-sm text-card-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
                   onClick={() => {
-                    setMessage(label)
+                    setMessage(t(label))
                     setTimeout(() => {
                       const form = textareaRef.current?.form
                       if (form) form.requestSubmit()
@@ -1377,7 +1381,7 @@ export function HomeClient() {
                   }}
                 >
                   <Icon className="size-4 text-muted-foreground" />
-                  {label}
+                  {t(label)}
                 </button>
               ))}
             </div>
@@ -1390,7 +1394,7 @@ export function HomeClient() {
         >
           <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
             <h2 className="text-xl font-semibold tracking-tight sm:text-2xl">
-              Start with a template
+              {t('Start with a template')}
             </h2>
             <div className="flex flex-wrap items-center gap-2">
               {templateCategories.slice(1).map((category) => (
@@ -1405,14 +1409,14 @@ export function HomeClient() {
                       : 'border-border bg-card text-muted-foreground hover:bg-accent hover:text-accent-foreground'
                   }`}
                 >
-                  {category}
+                  {t(category)}
                 </button>
               ))}
               <Link
                 href="/templates"
                 className="inline-flex items-center gap-1 px-2 py-1.5 text-xs font-medium text-foreground hover:text-primary sm:text-sm"
               >
-                Browse all
+                {t('Browse all')}
                 <ArrowRight className="size-3.5" />
               </Link>
             </div>
@@ -1441,7 +1445,7 @@ export function HomeClient() {
                       textareaRef.current?.focus()
                     }}
                     className="block w-full text-left"
-                    aria-label={`Use ${template.name} template`}
+                    aria-label={`${t('Use')} ${t(template.name)} ${t('template')}`}
                   >
                     <div
                       className={`relative aspect-[16/9] overflow-hidden p-5 ${
@@ -1475,18 +1479,18 @@ export function HomeClient() {
                         </div>
                       </div>
                       <span className="absolute bottom-7 right-7 rounded-full border border-white/10 bg-black/75 px-2.5 py-1 text-[11px] text-zinc-300">
-                        {template.category}
+                        {t(template.category)}
                       </span>
                     </div>
                     <div className="p-4">
                       <div className="flex items-center justify-between gap-3">
                         <h3 className="font-medium text-card-foreground">
-                          {template.name}
+                          {t(template.name)}
                         </h3>
                         <ArrowRight className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-1 group-hover:text-foreground" />
                       </div>
                       <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
-                        {template.description}
+                        {t(template.description)}
                       </p>
                     </div>
                   </button>
@@ -1499,12 +1503,12 @@ export function HomeClient() {
         {session?.user && recentChats && recentChats.length > 0 && (
           <section className="mx-auto max-w-7xl px-4 pb-16 sm:px-6">
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-lg font-semibold">Recent chats</h2>
+              <h2 className="text-lg font-semibold">{t('Recent chats')}</h2>
               <Link
                 href="/chats"
                 className="text-sm text-muted-foreground hover:text-foreground"
               >
-                View all
+                {t('View all')}
               </Link>
             </div>
             <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
@@ -1528,25 +1532,23 @@ export function HomeClient() {
           <div className="mx-auto max-w-3xl">
             <h2 className="flex items-center gap-2 text-lg font-semibold">
               <CircleHelp className="size-5 text-muted-foreground" />
-              Frequently asked questions
+              {t('Frequently asked questions')}
             </h2>
             <div className="mt-5 divide-y divide-white/10">
               <details className="py-4">
                 <summary className="cursor-pointer text-sm font-medium text-foreground">
-                  What can I build?
+                  {t('What can I build?')}
                 </summary>
                 <p className="mt-2 text-sm text-muted-foreground">
-                  Describe websites, dashboards, tools, and app ideas. Masidy
-                  creates a live preview and editable project files.
+                  {t('Describe websites, dashboards, tools, and app ideas. Masidy creates a live preview and editable project files.')}
                 </p>
               </details>
               <details className="py-4">
                 <summary className="cursor-pointer text-sm font-medium text-foreground">
-                  Can I start from a template?
+                  {t('Can I start from a template?')}
                 </summary>
                 <p className="mt-2 text-sm text-muted-foreground">
-                  Yes. Choose a starter above or browse the full template
-                  library, then customize the prompt before building.
+                  {t('Yes. Choose a starter above or browse the full template library, then customize the prompt before building.')}
                 </p>
               </details>
             </div>

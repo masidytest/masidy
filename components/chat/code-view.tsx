@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { FileCode2, Folder, FolderOpen } from 'lucide-react'
 import { CodeBlock } from '@/components/ui/code-block'
 import { normalizeCodeFileName } from '@/lib/code-files'
+import { useLocale } from '@/components/providers/locale-provider'
 
 interface CodeFile {
   fileName: string
@@ -106,6 +107,7 @@ function getLanguage(fileName: string): string {
 }
 
 export function CodeView({ files }: CodeViewProps) {
+  const { t } = useLocale()
   const [selectedFileName, setSelectedFileName] = useState<string | null>(null)
   const [collapsedFolders, setCollapsedFolders] = useState<Set<string>>(
     () => new Set(),
@@ -114,7 +116,7 @@ export function CodeView({ files }: CodeViewProps) {
   if (files.length === 0) {
     return (
       <div className="flex-1 flex items-center justify-center text-sm text-muted-foreground">
-        No files to display
+        {t('No files to display')}
       </div>
     )
   }
@@ -148,7 +150,7 @@ export function CodeView({ files }: CodeViewProps) {
                 })
               }
               className="flex w-full items-center gap-1.5 py-1.5 pr-2 text-left text-xs text-muted-foreground hover:bg-muted hover:text-foreground"
-              style={{ paddingLeft: 8 + depth * 12 }}
+              style={{ paddingInlineStart: 8 + depth * 12 }}
             >
               <FolderIcon className="size-3.5 shrink-0" />
               <span className="truncate">{node.name}</span>
@@ -172,7 +174,7 @@ export function CodeView({ files }: CodeViewProps) {
               ? 'bg-background text-foreground'
               : 'text-muted-foreground'
           }`}
-          style={{ paddingLeft: 8 + depth * 12 }}
+          style={{ paddingInlineStart: 8 + depth * 12 }}
           title={node.path}
         >
           <FileCode2 className="size-3.5 shrink-0" />
@@ -186,7 +188,7 @@ export function CodeView({ files }: CodeViewProps) {
       {/* File tree sidebar */}
       <div
         role="tree"
-        aria-label="Project files"
+        aria-label={t('Project files')}
         className="w-48 min-w-[12rem] flex-shrink-0 overflow-y-auto border-r border-border bg-muted/20 py-2"
       >
         {renderNodes(fileTree)}
@@ -204,7 +206,7 @@ export function CodeView({ files }: CodeViewProps) {
         ) : (
           <div className="flex h-full items-center justify-center p-6 text-center text-sm text-muted-foreground">
             <div>
-              <p className="font-medium">Source content is empty</p>
+              <p className="font-medium">{t('Source content is empty')}</p>
               <p className="mt-1 text-xs">{selectedFile.fileName}</p>
             </div>
           </div>

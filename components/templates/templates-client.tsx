@@ -12,8 +12,10 @@ import {
 import { appTemplates, templateCategories } from '@/lib/workspace-catalog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { useLocale } from '@/components/providers/locale-provider'
 
 export function TemplatesClient() {
+  const { t } = useLocale()
   const [category, setCategory] = useState('Browse All')
   const [search, setSearch] = useState('')
   const templates = useMemo(() => {
@@ -33,15 +35,13 @@ export function TemplatesClient() {
     <main className="mx-auto max-w-7xl px-4 pb-16 sm:px-6 lg:px-8">
       <header className="mx-auto max-w-3xl pb-12 pt-12 text-center sm:pb-16 sm:pt-16">
         <p className="text-sm font-medium text-muted-foreground">
-          The Masidy template gallery
+          {t('The Masidy template gallery')}
         </p>
         <h1 className="mt-3 text-4xl font-semibold tracking-tight sm:text-6xl">
-          Start with a template
+          {t('Start with a template')}
         </h1>
         <p className="mx-auto mt-4 max-w-2xl text-base text-muted-foreground sm:text-lg">
-          Choose a complete MIT-licensed project. Select a template to prefill
-          the builder, then submit your request to start from its real source
-          code.
+          {t('Choose a complete MIT-licensed project. Select a template to prefill the builder, then submit your request to start from its real source code.')}
         </p>
         <div className="mx-auto mt-7 max-w-xl">
           <label className="relative block">
@@ -49,8 +49,8 @@ export function TemplatesClient() {
             <Input
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              placeholder="Search templates..."
-              aria-label="Search templates"
+              placeholder={t('Search templates...')}
+              aria-label={t('Search templates...')}
               className="h-12 rounded-xl pl-11 text-left"
             />
           </label>
@@ -60,15 +60,15 @@ export function TemplatesClient() {
       <section aria-labelledby="gallery-heading">
         <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
           <h2 id="gallery-heading" className="text-lg font-semibold">
-            Categories
+            {t('Categories')}
           </h2>
           <span className="text-sm text-muted-foreground">
             {templates.length}{' '}
-            {templates.length === 1 ? 'template' : 'templates'}
+            {t(templates.length === 1 ? 'template' : 'templates')}
           </span>
         </div>
         <nav
-          aria-label="Template categories"
+          aria-label={t('Template categories')}
           className="mb-6 flex gap-2 overflow-x-auto pb-2"
         >
           {templateCategories.map((item) => (
@@ -83,23 +83,23 @@ export function TemplatesClient() {
                   : 'text-muted-foreground hover:bg-accent hover:text-foreground'
               }`}
             >
-              {item}
+              {t(item)}
             </button>
           ))}
         </nav>
 
         <div className="mb-4 flex items-center justify-between">
           <h3 className="text-lg font-semibold">
-            {category === 'Browse All' ? 'Browse all templates' : category}
+            {category === 'Browse All' ? t('Browse all templates') : t(category)}
           </h3>
         </div>
 
         {templates.length === 0 ? (
           <div className="rounded-xl border border-dashed p-10 text-center">
             <LayoutTemplate className="mx-auto size-8 text-muted-foreground" />
-            <h3 className="mt-3 font-medium">No matching templates</h3>
+            <h3 className="mt-3 font-medium">{t('No matching templates')}</h3>
             <p className="mt-1 text-sm text-muted-foreground">
-              Change the search or select a different category.
+              {t('Change the search or select a different category.')}
             </p>
           </div>
         ) : (
@@ -111,7 +111,7 @@ export function TemplatesClient() {
               >
                 <Link
                   href={`/?template=${encodeURIComponent(template.id)}`}
-                  aria-label={`Use ${template.name} template`}
+                  aria-label={`${t('Use')} ${t(template.name)} ${t('template')}`}
                   className="block"
                 >
                   <div
@@ -125,7 +125,7 @@ export function TemplatesClient() {
                   >
                     <LayoutTemplate className="size-8 text-foreground/70" />
                     <span className="text-sm font-medium text-foreground/80">
-                      Complete source project
+                      {t('Complete source project')}
                     </span>
                     <span className="absolute right-7 top-7 rounded-full border bg-background/90 px-2.5 py-1 text-xs text-muted-foreground shadow-sm">
                       MIT · GitHub
@@ -135,9 +135,9 @@ export function TemplatesClient() {
                 <div className="p-5">
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <h4 className="font-semibold">{template.name}</h4>
+                      <h4 className="font-semibold">{t(template.name)}</h4>
                       <p className="mt-1 text-sm text-muted-foreground">
-                        {template.description}
+                        {t(template.description)}
                       </p>
                     </div>
                     <ArrowUpRight className="mt-0.5 size-4 shrink-0 text-muted-foreground transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-foreground" />
@@ -169,7 +169,7 @@ export function TemplatesClient() {
                         href={`/?template=${encodeURIComponent(template.id)}`}
                       >
                         <Sparkles className="mr-2 size-4" />
-                        Use this template
+                        {t('Use this template')}
                       </Link>
                     </Button>
                   </div>

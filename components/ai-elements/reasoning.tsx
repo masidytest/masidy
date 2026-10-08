@@ -7,6 +7,7 @@ import {
   CollapsibleTrigger,
 } from '@/components/ui/collapsible'
 import { cn } from '@/lib/utils'
+import { useLocale } from '@/components/providers/locale-provider'
 import { BrainIcon, ChevronDownIcon } from 'lucide-react'
 import type { ComponentProps } from 'react'
 import { createContext, memo, useContext, useEffect, useState } from 'react'
@@ -124,6 +125,7 @@ export const ReasoningTrigger = memo(
     ...props
   }: ReasoningTriggerProps) => {
     const { isStreaming, isOpen, duration } = useReasoning()
+    const { t } = useLocale()
 
     return (
       <CollapsibleTrigger
@@ -137,9 +139,11 @@ export const ReasoningTrigger = memo(
           <>
             <BrainIcon className="size-4" />
             {isStreaming || duration === 0 ? (
-              <p>Thinking...</p>
+              <p>{t('Thinking...')}</p>
             ) : (
-              <p>Thought for {duration} seconds</p>
+              <p>
+                {t('Thought for')} {duration} {t('seconds')}
+              </p>
             )}
             <ChevronDownIcon
               className={cn(

@@ -4,6 +4,7 @@ import './globals.css'
 import { StreamingProvider } from '@/contexts/streaming-context'
 import { SWRProvider } from '@/components/providers/swr-provider'
 import { SessionProvider } from '@/components/providers/session-provider'
+import { LocaleProvider } from '@/components/providers/locale-provider'
 import { ThemeProvider } from '@/components/theme-provider'
 import { Toaster } from '@/components/ui/toaster'
 import { WorkspaceShell } from '@/components/shared/workspace-shell'
@@ -49,11 +50,13 @@ export default async function RootLayout({
           disableTransitionOnChange
         >
           <SessionProvider session={session}>
-            <SWRProvider>
-              <StreamingProvider>
-                <WorkspaceShell>{children}</WorkspaceShell>
-              </StreamingProvider>
-            </SWRProvider>
+            <LocaleProvider>
+              <SWRProvider>
+                <StreamingProvider>
+                  <WorkspaceShell>{children}</WorkspaceShell>
+                </StreamingProvider>
+              </SWRProvider>
+            </LocaleProvider>
           </SessionProvider>
           <Toaster />
         </ThemeProvider>

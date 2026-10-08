@@ -17,6 +17,7 @@ import {
 import { Suggestions, Suggestion } from '@/components/ai-elements/suggestion'
 import { useToast } from '@/components/ui/use-toast'
 import { useState, useCallback, useEffect } from 'react'
+import { useLocale } from '@/components/providers/locale-provider'
 
 interface ChatInputProps {
   message: string
@@ -44,6 +45,7 @@ export function ChatInput({
   onAttachmentsChange,
   textareaRef,
 }: ChatInputProps) {
+  const { t } = useLocale()
   const [isDragOver, setIsDragOver] = useState(false)
   const { toast } = useToast()
 
@@ -141,7 +143,7 @@ export function ChatInput({
             onChange={(e) => setMessage(e.target.value)}
             value={message}
             className="min-h-[60px]"
-            placeholder="Continue the conversation..."
+            placeholder={t('Continue the conversation...')}
             disabled={isLoading || isGenerating}
           />
           <PromptInputToolbar>
@@ -158,7 +160,7 @@ export function ChatInput({
                 }}
                 onError={(error) => {
                   toast({
-                    title: 'Microphone unavailable',
+                    title: t('Microphone unavailable'),
                     description: error,
                     variant: 'destructive',
                   })
@@ -178,7 +180,7 @@ export function ChatInput({
           <Suggestions>
             <Suggestion
               onClick={() => {
-                setMessage('Landing page')
+                setMessage(t('Landing page'))
                 // Submit after setting message
                 setTimeout(() => {
                   const form = textareaRef?.current?.form
@@ -187,11 +189,11 @@ export function ChatInput({
                   }
                 }, 0)
               }}
-              suggestion="Landing page"
+              suggestion={t('Landing page')}
             />
             <Suggestion
               onClick={() => {
-                setMessage('Todo app')
+                setMessage(t('Todo app'))
                 // Submit after setting message
                 setTimeout(() => {
                   const form = textareaRef?.current?.form
@@ -200,11 +202,11 @@ export function ChatInput({
                   }
                 }, 0)
               }}
-              suggestion="Todo app"
+              suggestion={t('Todo app')}
             />
             <Suggestion
               onClick={() => {
-                setMessage('Dashboard')
+                setMessage(t('Dashboard'))
                 // Submit after setting message
                 setTimeout(() => {
                   const form = textareaRef?.current?.form
@@ -213,11 +215,11 @@ export function ChatInput({
                   }
                 }, 0)
               }}
-              suggestion="Dashboard"
+              suggestion={t('Dashboard')}
             />
             <Suggestion
               onClick={() => {
-                setMessage('Blog')
+                setMessage(t('Blog'))
                 // Submit after setting message
                 setTimeout(() => {
                   const form = textareaRef?.current?.form
@@ -226,11 +228,11 @@ export function ChatInput({
                   }
                 }, 0)
               }}
-              suggestion="Blog"
+              suggestion={t('Blog')}
             />
             <Suggestion
               onClick={() => {
-                setMessage('E-commerce')
+                setMessage(t('E-commerce'))
                 // Submit after setting message
                 setTimeout(() => {
                   const form = textareaRef?.current?.form
@@ -239,11 +241,11 @@ export function ChatInput({
                   }
                 }, 0)
               }}
-              suggestion="E-commerce"
+              suggestion={t('E-commerce')}
             />
             <Suggestion
               onClick={() => {
-                setMessage('Portfolio')
+                setMessage(t('Portfolio'))
                 // Submit after setting message
                 setTimeout(() => {
                   const form = textareaRef?.current?.form
@@ -252,11 +254,11 @@ export function ChatInput({
                   }
                 }, 0)
               }}
-              suggestion="Portfolio"
+              suggestion={t('Portfolio')}
             />
             <Suggestion
               onClick={() => {
-                setMessage('Chat app')
+                setMessage(t('Chat app'))
                 // Submit after setting message
                 setTimeout(() => {
                   const form = textareaRef?.current?.form
@@ -265,11 +267,11 @@ export function ChatInput({
                   }
                 }, 0)
               }}
-              suggestion="Chat app"
+              suggestion={t('Chat app')}
             />
             <Suggestion
               onClick={() => {
-                setMessage('Calculator')
+                setMessage(t('Calculator'))
                 // Submit after setting message
                 setTimeout(() => {
                   const form = textareaRef?.current?.form
@@ -278,7 +280,7 @@ export function ChatInput({
                   }
                 }, 0)
               }}
-              suggestion="Calculator"
+              suggestion={t('Calculator')}
             />
           </Suggestions>
         </div>

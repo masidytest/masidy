@@ -26,6 +26,7 @@ import {
 import { Textarea } from '@/components/ui/textarea'
 import { useToast } from '@/components/ui/use-toast'
 import { managedResourceLimits } from '@/lib/managed-resource-limits'
+import { useLocale } from '@/components/providers/locale-provider'
 
 interface Project {
   id: string
@@ -46,6 +47,7 @@ const fetcher = async (url: string): Promise<ProjectsResponse> => {
 }
 
 export function ProjectsClient() {
+  const { locale, t } = useLocale()
   const { data, error, isLoading, mutate } = useSWR<ProjectsResponse>(
     '/api/projects',
     fetcher,
@@ -133,16 +135,16 @@ export function ProjectsClient() {
       setDescription('')
       setInstructions('')
       toast({
-        title: 'Project created',
+        title: t('Project created'),
         description: `${result.name} is ready.`,
       })
     } catch (createError) {
       toast({
-        title: 'Could not create project',
+        title: t('Could not create project'),
         description:
           createError instanceof Error
             ? createError.message
-            : 'Please try again.',
+            : t('Please try again.'),
         variant: 'destructive',
       })
     } finally {
@@ -155,16 +157,16 @@ export function ProjectsClient() {
       <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
         <header className="mb-7 flex flex-wrap items-start justify-between gap-4">
           <div>
-            <p className="text-sm text-muted-foreground">Workspace</p>
+            <p className="text-sm text-muted-foreground">{t('Workspace')}</p>
             <h1 className="mt-1 text-3xl font-semibold tracking-tight">
-              Projects
+              {t('Projects')}
             </h1>
             <p className="mt-2 text-sm text-muted-foreground">
-              Keep chats, project instructions, and builds together.
+              {t('Keep chats, project instructions, and builds together.')}
             </p>
             {hasReachedProjectLimit && (
               <p className="mt-2 text-sm text-amber-600 dark:text-amber-400">
-                You reached your project limit.
+                {t('You reached your project limit.')}
               </p>
             )}
           </div>
@@ -173,21 +175,22 @@ export function ProjectsClient() {
             disabled={hasReachedProjectLimit}
           >
             <Plus className="mr-2 size-4" />
-            Add project
+            {t('Add project')}
           </Button>
         </header>
 
         <div className="mb-5 flex flex-wrap items-center gap-3">
           <span className="text-sm text-muted-foreground">
-            {projects.length} / {managedResourceLimits.projectsPerUser} projects
+            {projects.length} / {managedResourceLimits.projectsPerUser}{' '}
+            {t('projects')}
           </span>
           <label className="relative min-w-60 flex-1">
             <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              placeholder="Search projects"
-              aria-label="Search projects"
+              placeholder={t('Search projects')}
+              aria-label={t('Search projects')}
               className="pl-9"
             />
           </label>
@@ -195,10 +198,10 @@ export function ProjectsClient() {
             type="button"
             variant="outline"
             onClick={() => setFilterOpen(true)}
-            aria-label="Filter projects"
+            aria-label={t('Filter projects')}
           >
             <ListFilter className="mr-2 size-4" />
-            Filters
+            {t('Filters')}
             {activeFilterCount > 0 && (
               <span className="ml-2 rounded-full bg-primary px-1.5 py-0.5 text-[10px] font-medium text-primary-foreground">
                 {activeFilterCount}
@@ -206,11 +209,11 @@ export function ProjectsClient() {
             )}
           </Button>
           <label className="sr-only" htmlFor="project-sort">
-            Sort projects
+            {t('Sort projects')}
           </label>
           <select
             id="project-sort"
-            aria-label="Sort projects"
+            aria-label={t('Sort projects')}
             className="h-9 rounded-md border border-input bg-background px-3 text-sm"
             value={sortOrder}
             onChange={(event) =>
@@ -222,20 +225,20 @@ export function ProjectsClient() {
               )
             }
           >
-            <option value="updated-desc">Recently updated</option>
-            <option value="updated-asc">Least recently updated</option>
-            <option value="name-asc">Name A–Z</option>
+            <option value="updated-desc">{t('Recently updated')}</option>
+            <option value="updated-asc">{t('Least recently updated')}</option>
+            <option value="name-asc">{t('Name A–Z')}</option>
           </select>
           <span className="text-sm text-muted-foreground">
             {filteredProjects.length}{' '}
-            {filteredProjects.length === 1 ? 'project' : 'projects'}
+            {t(filteredProjects.length === 1 ? 'project' : 'projects')}
           </span>
         </div>
 
         {isLoading && (
           <div className="flex items-center justify-center gap-2 py-16 text-sm text-muted-foreground">
             <LoaderCircle className="size-4 animate-spin" />
-            Loading projects…
+            {t('Loading projects…')}
           </div>
         )}
         {error && (
@@ -250,7 +253,7 @@ export function ProjectsClient() {
               className="mt-3"
               onClick={() => void mutate()}
             >
-              Retry
+              {t('Retry')}
             </Button>
           </div>
         )}
@@ -259,13 +262,13 @@ export function ProjectsClient() {
             <FolderKanban className="mx-auto size-8 text-muted-foreground" />
             <h2 className="mt-3 font-medium">
               {hasActiveFilters
-                ? 'No matching projects'
-                : 'Create your first project'}
+                ? t('No matching projects')
+                : t('Create your first project')}
             </h2>
             <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
               {hasActiveFilters
-                ? 'Try a different project name or clear your search.'
-                : 'Projects keep your chats and generation instructions organized in one workspace.'}
+                ? t('Try a different project name or clear your search.')
+                : t('Projects keep your chats and generation instructions organized in one workspace.')}
             </p>
             {hasActiveFilters ? (
               <Button
@@ -276,7 +279,7 @@ export function ProjectsClient() {
                   clearFilters()
                 }}
               >
-                Clear search and filters
+                {t('Clear search and filters')}
               </Button>
             ) : (
               <Button
@@ -285,7 +288,7 @@ export function ProjectsClient() {
                 disabled={hasReachedProjectLimit}
               >
                 <Plus className="mr-2 size-4" />
-                Create project
+                {t('Create project')}
               </Button>
             )}
           </div>
@@ -308,14 +311,14 @@ export function ProjectsClient() {
                     </h2>
                     <p className="mt-1 line-clamp-2 min-h-10 text-sm text-muted-foreground">
                       {project.updatedAt
-                        ? `Updated ${new Date(project.updatedAt).toLocaleDateString()}`
-                        : 'Project workspace'}
+                        ? `${t('Updated')} ${new Date(project.updatedAt).toLocaleDateString(locale === 'ar' ? 'ar' : 'en')}`
+                        : t('Project workspace')}
                     </p>
                   </div>
                 </div>
                 <div className="mt-5 flex items-center gap-2 text-xs text-muted-foreground">
                   <MessageSquare className="size-3.5" />
-                  <span>Open project workspace</span>
+                  <span>{t('Open project workspace')}</span>
                   <span className="ml-auto inline-flex items-center gap-1 capitalize">
                     <Shield className="size-3.5" />
                     {project.privacy}
@@ -331,15 +334,14 @@ export function ProjectsClient() {
         <DialogContent>
           <form onSubmit={createProject} className="space-y-4">
             <DialogHeader>
-              <DialogTitle>Create a project</DialogTitle>
+              <DialogTitle>{t('Create a project')}</DialogTitle>
               <DialogDescription>
-                Set up a workspace for related chats and consistent generation
-                instructions.
+                {t('Set up a workspace for related chats and consistent generation instructions.')}
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-2">
               <label htmlFor="project-name" className="text-sm font-medium">
-                Name
+                {t('Name')}
               </label>
               <Input
                 id="project-name"
@@ -347,7 +349,7 @@ export function ProjectsClient() {
                 maxLength={80}
                 value={name}
                 onChange={(event) => setName(event.target.value)}
-                placeholder="e.g. Marketing website"
+                placeholder={t('e.g. Marketing website')}
                 required
               />
             </div>
@@ -356,14 +358,14 @@ export function ProjectsClient() {
                 htmlFor="project-description"
                 className="text-sm font-medium"
               >
-                Description
+                {t('Description')}
               </label>
               <Input
                 id="project-description"
                 maxLength={500}
                 value={description}
                 onChange={(event) => setDescription(event.target.value)}
-                placeholder="What belongs in this project?"
+                placeholder={t('What belongs in this project?')}
               />
             </div>
             <div className="space-y-2">
@@ -371,14 +373,14 @@ export function ProjectsClient() {
                 htmlFor="project-instructions"
                 className="text-sm font-medium"
               >
-                Generation instructions
+                {t('Generation instructions')}
               </label>
               <Textarea
                 id="project-instructions"
                 maxLength={4000}
                 value={instructions}
                 onChange={(event) => setInstructions(event.target.value)}
-                placeholder="Shared requirements, tech choices, and visual direction"
+                placeholder={t('Shared requirements, tech choices, and visual direction')}
                 rows={4}
               />
             </div>
@@ -389,7 +391,7 @@ export function ProjectsClient() {
                 onClick={() => setCreateOpen(false)}
                 disabled={isCreating}
               >
-                Cancel
+                {t('Cancel')}
               </Button>
               <Button
                 type="submit"
@@ -400,7 +402,7 @@ export function ProjectsClient() {
                 {isCreating && (
                   <LoaderCircle className="mr-2 size-4 animate-spin" />
                 )}
-                Create project
+                {t('Create project')}
               </Button>
             </DialogFooter>
           </form>
@@ -410,9 +412,9 @@ export function ProjectsClient() {
       <Dialog open={filterOpen} onOpenChange={setFilterOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Filter projects</DialogTitle>
+            <DialogTitle>{t('Filter projects')}</DialogTitle>
             <DialogDescription>
-              Narrow projects by visibility and when they were last updated.
+              {t('Narrow projects by visibility and when they were last updated.')}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
@@ -421,7 +423,7 @@ export function ProjectsClient() {
                 htmlFor="project-visibility-filter"
                 className="text-sm font-medium"
               >
-                Project visibility
+                {t('Project visibility')}
               </label>
               <select
                 id="project-visibility-filter"
@@ -433,9 +435,9 @@ export function ProjectsClient() {
                   )
                 }
               >
-                <option value="all">All projects</option>
-                <option value="private">Private projects</option>
-                <option value="team">Team projects</option>
+                <option value="all">{t('All projects')}</option>
+                <option value="private">{t('Private projects')}</option>
+                <option value="team">{t('Team projects')}</option>
               </select>
             </div>
             <div className="space-y-2">
@@ -443,7 +445,7 @@ export function ProjectsClient() {
                 htmlFor="project-updated-filter"
                 className="text-sm font-medium"
               >
-                Last updated
+                {t('Last updated')}
               </label>
               <select
                 id="project-updated-filter"
@@ -455,20 +457,20 @@ export function ProjectsClient() {
                   )
                 }
               >
-                <option value="any">Any time</option>
-                <option value="week">Past 7 days</option>
-                <option value="month">Past 30 days</option>
-                <option value="older">More than 30 days ago</option>
+                <option value="any">{t('Any time')}</option>
+                <option value="week">{t('Past 7 days')}</option>
+                <option value="month">{t('Past 30 days')}</option>
+                <option value="older">{t('More than 30 days ago')}</option>
               </select>
             </div>
           </div>
           <DialogFooter className="flex-row justify-between sm:justify-between">
             <Button type="button" variant="ghost" onClick={clearFilters}>
               <X className="mr-2 size-4" />
-              Clear filters
+              {t('Clear filters')}
             </Button>
             <Button type="button" onClick={() => setFilterOpen(false)}>
-              Show {filteredProjects.length} projects
+              {t('Show')} {filteredProjects.length} {t('projects')}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -1,6 +1,7 @@
 'use client'
 
 import { Button } from '@/components/ui/button'
+import { useLocale } from '@/components/providers/locale-provider'
 import { cn } from '@/lib/utils'
 import type { UIMessage } from 'ai'
 import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react'
@@ -141,10 +142,11 @@ export const BranchPrevious = ({
   ...props
 }: BranchPreviousProps) => {
   const { goToPrevious, totalBranches } = useBranch()
+  const { t } = useLocale()
 
   return (
     <Button
-      aria-label="Previous branch"
+      aria-label={t('Previous branch')}
       className={cn(
         'size-7 shrink-0 rounded-full text-muted-foreground transition-colors',
         'hover:bg-accent hover:text-foreground',
@@ -171,10 +173,11 @@ export const BranchNext = ({
   ...props
 }: BranchNextProps) => {
   const { goToNext, totalBranches } = useBranch()
+  const { t } = useLocale()
 
   return (
     <Button
-      aria-label="Next branch"
+      aria-label={t('Next branch')}
       className={cn(
         'size-7 shrink-0 rounded-full text-muted-foreground transition-colors',
         'hover:bg-accent hover:text-foreground',

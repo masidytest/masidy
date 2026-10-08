@@ -14,6 +14,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
+import { useLocale } from '@/components/providers/locale-provider'
 import { ChevronDownIcon } from 'lucide-react'
 import type { ComponentProps, ReactNode } from 'react'
 import { createContext, useContext, useState } from 'react'
@@ -130,6 +131,7 @@ export const WebPreviewUrl = ({
   ...props
 }: WebPreviewUrlProps) => {
   const { url, setUrl } = useWebPreview()
+  const { t } = useLocale()
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter') {
@@ -144,7 +146,7 @@ export const WebPreviewUrl = ({
       className="h-8 flex-1 text-sm"
       onChange={onChange}
       onKeyDown={handleKeyDown}
-      placeholder="Enter URL..."
+      placeholder={t('Enter URL...')}
       value={value ?? url}
       {...props}
     />
@@ -162,6 +164,7 @@ export const WebPreviewBody = ({
   ...props
 }: WebPreviewBodyProps) => {
   const { url } = useWebPreview()
+  const { t } = useLocale()
 
   return (
     <div className="flex-1">
@@ -169,7 +172,7 @@ export const WebPreviewBody = ({
         className={cn('size-full', className)}
         sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-presentation"
         src={(src ?? url) || undefined}
-        title="Preview"
+        title={t('Preview')}
         {...props}
       />
       {loading}
@@ -192,6 +195,7 @@ export const WebPreviewConsole = ({
   ...props
 }: WebPreviewConsoleProps) => {
   const { consoleOpen, setConsoleOpen } = useWebPreview()
+  const { t } = useLocale()
 
   return (
     <Collapsible
@@ -205,7 +209,7 @@ export const WebPreviewConsole = ({
           className="flex w-full items-center justify-between p-4 text-left font-medium hover:bg-muted/50"
           variant="ghost"
         >
-          Console
+          {t('Console')}
           <ChevronDownIcon
             className={cn(
               'h-4 w-4 transition-transform duration-200',
@@ -222,7 +226,7 @@ export const WebPreviewConsole = ({
       >
         <div className="max-h-48 space-y-1 overflow-y-auto">
           {logs.length === 0 ? (
-            <p className="text-muted-foreground">No console output</p>
+            <p className="text-muted-foreground">{t('No console output')}</p>
           ) : (
             logs.map((log, index) => (
               <div
