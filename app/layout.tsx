@@ -24,9 +24,9 @@ export const metadata: Metadata = {
   description:
     'Masidy — AI-powered app builder. Generate and preview React apps instantly with AI.',
   icons: {
-    icon: '/masidy-icon.svg',
-    shortcut: '/masidy-icon.svg',
-    apple: '/masidy.dev.logo.png',
+    icon: '/masidy-icon.svg?v=2',
+    shortcut: '/masidy-icon.svg?v=2',
+    apple: '/masidy-icon.svg?v=2',
   },
 }
 
