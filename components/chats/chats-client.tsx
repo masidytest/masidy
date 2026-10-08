@@ -143,7 +143,7 @@ export function ChatsClient() {
               </div>
               <Link
                 href="/"
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:bg-blue-500 dark:hover:bg-blue-600"
+                className="inline-flex items-center rounded-md border border-foreground bg-foreground px-4 py-2 text-sm font-medium text-background shadow-sm transition-colors hover:bg-background hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 New Chat
@@ -198,7 +198,7 @@ export function ChatsClient() {
                 <div className="mt-6">
                   <Link
                     href="/"
-                    className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:bg-blue-500 dark:hover:bg-blue-600"
+                    className="inline-flex items-center rounded-md border border-foreground bg-foreground px-4 py-2 text-sm font-medium text-background shadow-sm transition-colors hover:bg-background hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                   >
                     <Plus className="h-4 w-4 mr-2" />
                     New Chat
@@ -217,7 +217,7 @@ export function ChatsClient() {
                         href={`/chats/${chat.id}`}
                         className="min-w-0 flex-1"
                       >
-                        <h3 className="text-lg font-medium text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors truncate">
+                        <h3 className="text-lg font-medium text-foreground group-hover:text-muted-foreground transition-colors truncate">
                           {chat.name || getFirstUserMessage(chat)}
                         </h3>
                         <div className="mt-2 flex items-center text-sm text-gray-500 dark:text-gray-400">

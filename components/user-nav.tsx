@@ -8,6 +8,7 @@ import useSWR from 'swr'
 import { Session } from 'next-auth'
 import {
   Gauge,
+  LayoutDashboard,
   LayoutTemplate,
   LogIn,
   LogOut,
@@ -201,6 +202,12 @@ export function UserNav({ session, collapsed = false }: UserNavProps) {
             </div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
+          <DropdownMenuItem asChild>
+            <Link href="/projects">
+              <LayoutDashboard className="mr-2 size-4" />
+              Dashboard
+            </Link>
+          </DropdownMenuItem>
           <DropdownMenuItem asChild>
             <a href="/account">
               <Settings className="mr-2 size-4" />

@@ -1123,11 +1123,6 @@ export function HomeClient() {
       <main>
         <section className="px-4 pb-20 pt-16 sm:px-6 sm:pt-20">
           <div className="mx-auto max-w-3xl text-center">
-            <div className="mb-7 inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-sm text-muted-foreground shadow-sm">
-              <Sparkles className="size-4 text-foreground" />
-              <span>Turn your ideas into working apps</span>
-              <ArrowRight className="size-3.5" />
-            </div>
             <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-5xl">
               What do you want to create?
             </h1>
