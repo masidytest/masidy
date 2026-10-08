@@ -53,13 +53,24 @@ function getApiErrorDetails(
 }
 
 export class V0KeyPool {
-  private readonly keys: KeyState[]
+  private readonly keys: KeyState[] = []
+  private readonly rawKeys: string[]
+  private readonly baseUrl?: string
   private readonly maxInflightPerKey: number
   private readonly maxWaitMs: number
   private cursor = 0
 
   constructor(rawKeys: string[], options: PoolOptions = {}) {
-    const entries = rawKeys
+    this.rawKeys = rawKeys
+    this.baseUrl = options.baseUrl || process.env.V0_API_URL
+    this.maxInflightPerKey = options.maxInflightPerKey ?? 4
+    this.maxWaitMs = options.maxWaitMs ?? 10_000
+  }
+
+  private ensureKeys() {
+    if (this.keys.length > 0) return
+
+    const entries = this.rawKeys
       .map((entry) => {
         const match = entry.trim().match(/^(.+?)(?:\*(\d+))?$/)
         if (!match) return null
@@ -80,22 +91,25 @@ export class V0KeyPool {
       throw new Error('V0KeyPool: set V0_API_KEYS, V0_API_KEY0, or V0_API_KEY')
     }
 
-    const baseUrl = options.baseUrl || process.env.V0_API_URL
-    this.keys = Array.from(uniqueKeys, ([key, weight]) => ({
-      id: `…${key.slice(-4)}`,
-      key,
-      client: createClient({ apiKey: key, ...(baseUrl ? { baseUrl } : {}) }),
-      weight,
-      inflight: 0,
-      used: 0,
-      cooldownUntil: 0,
-      disabled: false,
-    }))
-    this.maxInflightPerKey = options.maxInflightPerKey ?? 4
-    this.maxWaitMs = options.maxWaitMs ?? 10_000
+    this.keys.push(
+      ...Array.from(uniqueKeys, ([key, weight]) => ({
+        id: `…${key.slice(-4)}`,
+        key,
+        client: createClient({
+          apiKey: key,
+          ...(this.baseUrl ? { baseUrl: this.baseUrl } : {}),
+        }),
+        weight,
+        inflight: 0,
+        used: 0,
+        cooldownUntil: 0,
+        disabled: false,
+      })),
+    )
   }
 
   stats() {
+    this.ensureKeys()
     const now = Date.now()
     return this.keys.map(({ client: _client, key: _key, ...state }) => ({
       ...state,
@@ -155,6 +169,7 @@ export class V0KeyPool {
   }
 
   private async call(path: PropertyKey[], args: unknown[]): Promise<unknown> {
+    this.ensureKeys()
     const tried = new Set<KeyState>()
     let lastRateLimitError: Error | undefined
 
@@ -237,7 +252,9 @@ export class V0KeyPool {
   }
 
   client(): V0Client & { stats: () => ReturnType<V0KeyPool['stats']> } {
-    const target = this.keys[0].client
+    const target = createClient({
+      ...(this.baseUrl ? { baseUrl: this.baseUrl } : {}),
+    })
     const pool = this
     const proxy = new Proxy(target, {
       get(client, property, receiver) {
