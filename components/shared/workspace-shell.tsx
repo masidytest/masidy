@@ -121,6 +121,15 @@ export function WorkspaceShell({ children }: WorkspaceShellProps) {
     return () => window.removeEventListener('keydown', handleShortcut)
   }, [])
 
+  useEffect(() => {
+    if (!mobileOpen) return
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = previousOverflow
+    }
+  }, [mobileOpen])
+
   const filteredChats = useMemo(() => {
     const normalizedSearch = search.trim().toLowerCase()
     const ordered = [...chats].sort(
@@ -592,6 +601,8 @@ export function WorkspaceShell({ children }: WorkspaceShellProps) {
         className="fixed left-3 top-3 z-40 size-9 bg-background shadow lg:hidden"
         onClick={() => setMobileOpen(true)}
         aria-label="Open workspace navigation"
+        aria-expanded={mobileOpen}
+        aria-controls="workspace-mobile-navigation"
       >
         <PanelLeft className="size-4" />
       </Button>
@@ -604,7 +615,13 @@ export function WorkspaceShell({ children }: WorkspaceShellProps) {
             className="absolute inset-0 bg-black/50"
             onClick={closeMobile}
           />
-          <div className="absolute inset-y-0 left-0 shadow-xl">
+          <div
+            id="workspace-mobile-navigation"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Workspace navigation"
+            className="absolute inset-y-0 left-0 shadow-xl"
+          >
             {sidebar}
             <Button
               variant="outline"
@@ -619,7 +636,16 @@ export function WorkspaceShell({ children }: WorkspaceShellProps) {
         </div>
       )}
 
-      <main className="min-w-0 flex-1">{children}</main>
+      <main
+        className={cn(
+          'min-w-0 flex-1',
+          pathname.startsWith('/chats/') && pathname !== '/chats'
+            ? ''
+            : 'pt-12 lg:pt-0',
+        )}
+      >
+        {children}
+      </main>
 
       <Dialog open={searchOpen} onOpenChange={setSearchOpen}>
         <DialogContent className="top-[18%] max-w-xl translate-y-0 gap-3 p-3">

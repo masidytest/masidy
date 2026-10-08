@@ -4,7 +4,15 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useSession } from 'next-auth/react'
-import { LayoutTemplate, Menu, Palette, X } from 'lucide-react'
+import {
+  FolderKanban,
+  Home,
+  LayoutTemplate,
+  Menu,
+  MessageSquare,
+  Palette,
+  X,
+} from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ChatSelector } from './chat-selector'
 export function MobileMenu() {
@@ -63,6 +71,8 @@ export function MobileMenu() {
         size="sm"
         className="lg:hidden h-8 w-8 p-0"
         onClick={openMenu}
+        aria-expanded={isOpen}
+        aria-controls="mobile-navigation"
       >
         <Menu className="h-5 w-5" />
         <span className="sr-only">Open menu</span>
@@ -81,6 +91,10 @@ export function MobileMenu() {
 
           {/* Menu panel */}
           <div
+            id="mobile-navigation"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Mobile navigation"
             className={`fixed inset-y-0 right-0 w-full max-w-sm bg-white dark:bg-black border-l border-border shadow-lg transform transition-transform duration-300 ease-out ${
               isAnimating ? 'translate-x-0' : 'translate-x-full'
             }`}
@@ -115,31 +129,52 @@ export function MobileMenu() {
 
                 {/* Menu items */}
                 <div className="space-y-2">
-                  <Button
-                    variant="ghost"
-                    className="w-full justify-start h-auto p-3 text-left"
-                    asChild
-                  >
-                    <Link href="/templates" onClick={closeMenu}>
-                      <div className="flex items-center gap-3 w-full">
-                        <LayoutTemplate size={16} />
-                        <div className="font-medium">Templates</div>
-                      </div>
-                    </Link>
-                  </Button>
-
-                  <Button
-                    variant="ghost"
-                    className="w-full justify-start h-auto p-3 text-left"
-                    asChild
-                  >
-                    <Link href="/design-systems" onClick={closeMenu}>
-                      <div className="flex items-center gap-3 w-full">
-                        <Palette size={16} />
-                        <div className="font-medium">Design systems</div>
-                      </div>
-                    </Link>
-                  </Button>
+                  {[
+                    { label: 'Home', href: '/', icon: Home },
+                    {
+                      label: 'Projects',
+                      href: '/projects',
+                      icon: FolderKanban,
+                      authenticated: true,
+                    },
+                    {
+                      label: 'Chats',
+                      href: '/chats',
+                      icon: MessageSquare,
+                      authenticated: true,
+                    },
+                    {
+                      label: 'Templates',
+                      href: '/templates',
+                      icon: LayoutTemplate,
+                    },
+                    {
+                      label: 'Design systems',
+                      href: '/design-systems',
+                      icon: Palette,
+                    },
+                    {
+                      label: 'FAQ',
+                      href: isHomepage ? '#faq' : '/#faq',
+                      icon: null,
+                    },
+                  ]
+                    .filter(
+                      (item) => !item.authenticated || session?.user?.id,
+                    )
+                    .map(({ label, href, icon: Icon }) => (
+                      <Button
+                        key={label}
+                        variant="ghost"
+                        className="h-11 w-full justify-start text-left"
+                        asChild
+                      >
+                        <Link href={href} onClick={closeMenu}>
+                          {Icon && <Icon className="mr-3 size-4" />}
+                          <span className="font-medium">{label}</span>
+                        </Link>
+                      </Button>
+                    ))}
                 </div>
               </div>
             </div>

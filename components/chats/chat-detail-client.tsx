@@ -827,7 +827,7 @@ export function ChatDetailClient() {
         isFullscreen && 'fixed inset-0 z-50',
       )}
     >
-      <header className="grid h-[52px] shrink-0 grid-cols-[minmax(0,30%)_minmax(0,1fr)_auto] items-center gap-2 border-b border-border px-3 pl-14 lg:pl-3">
+      <header className="grid h-[52px] shrink-0 grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-1 border-b border-border px-2 pl-14 sm:gap-2 sm:px-3 lg:grid-cols-[minmax(0,30%)_minmax(0,1fr)_auto] lg:pl-3">
         <div className="flex min-w-0 items-center gap-1.5">
           <span
             aria-hidden="true"

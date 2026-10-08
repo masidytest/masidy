@@ -23,6 +23,7 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { UserNav } from '@/components/user-nav'
+import { MobileMenu } from '@/components/shared/mobile-menu'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -1073,7 +1074,7 @@ export function HomeClient() {
           </Link>
           <nav
             aria-label="Landing page navigation"
-            className="hidden items-center gap-7 text-sm text-muted-foreground md:flex"
+            className="hidden items-center gap-7 text-sm text-muted-foreground lg:flex"
           >
             <a href="#templates" className="transition-colors hover:text-foreground">
               Templates
@@ -1094,7 +1095,7 @@ export function HomeClient() {
               FAQ
             </a>
           </nav>
-          <div className="flex items-center justify-self-end gap-2">
+          <div className="flex items-center justify-self-end gap-1 sm:gap-2">
             {session?.user ? (
               <UserNav session={session} collapsed />
             ) : (
@@ -1103,7 +1104,7 @@ export function HomeClient() {
                   asChild
                   variant="outline"
                   size="sm"
-                  className="border-border bg-transparent text-foreground hover:bg-accent hover:text-accent-foreground"
+                  className="hidden border-border bg-transparent text-foreground hover:bg-accent hover:text-accent-foreground sm:inline-flex"
                 >
                   <Link href="/login">Log in</Link>
                 </Button>
@@ -1116,6 +1117,7 @@ export function HomeClient() {
                 </Button>
               </>
             )}
+            <MobileMenu />
           </div>
         </div>
       </header>
