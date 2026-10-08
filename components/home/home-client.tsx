@@ -1061,7 +1061,7 @@ export function HomeClient() {
         />
       </Suspense>
 
-      <header className="sticky top-0 z-30 border-b border-white/10 bg-black/90 backdrop-blur">
+      <header className="sticky top-0 z-30 border-b border-border bg-background/90 text-foreground backdrop-blur">
         <div className="mx-auto grid h-14 max-w-7xl grid-cols-[1fr_auto_1fr] items-center px-4 sm:px-6">
           <Link
             href="/"
@@ -1073,24 +1073,24 @@ export function HomeClient() {
           </Link>
           <nav
             aria-label="Landing page navigation"
-            className="hidden items-center gap-7 text-sm text-zinc-300 md:flex"
+            className="hidden items-center gap-7 text-sm text-muted-foreground md:flex"
           >
-            <a href="#templates" className="transition-colors hover:text-white">
+            <a href="#templates" className="transition-colors hover:text-foreground">
               Templates
             </a>
             <Link
               href="/projects"
-              className="transition-colors hover:text-white"
+              className="transition-colors hover:text-foreground"
             >
               Projects
             </Link>
             <Link
               href="/design-systems"
-              className="transition-colors hover:text-white"
+              className="transition-colors hover:text-foreground"
             >
               Design systems
             </Link>
-            <a href="#faq" className="transition-colors hover:text-white">
+            <a href="#faq" className="transition-colors hover:text-foreground">
               FAQ
             </a>
           </nav>
@@ -1103,14 +1103,14 @@ export function HomeClient() {
                   asChild
                   variant="outline"
                   size="sm"
-                  className="border-white/15 bg-transparent text-white hover:bg-white/10 hover:text-white"
+                  className="border-border bg-transparent text-foreground hover:bg-accent hover:text-accent-foreground"
                 >
                   <Link href="/login">Log in</Link>
                 </Button>
                 <Button
                   asChild
                   size="sm"
-                  className="bg-white text-black hover:bg-zinc-200"
+                  className="bg-primary text-primary-foreground hover:bg-primary/90"
                 >
                   <Link href="/register">Sign up</Link>
                 </Button>
@@ -1123,22 +1123,22 @@ export function HomeClient() {
       <main>
         <section className="px-4 pb-20 pt-16 sm:px-6 sm:pt-20">
           <div className="mx-auto max-w-3xl text-center">
-            <div className="mb-7 inline-flex items-center gap-2 rounded-full border border-white/10 bg-zinc-950 px-4 py-2 text-sm text-zinc-300 shadow-sm">
-              <Sparkles className="size-4 text-zinc-200" />
+            <div className="mb-7 inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-sm text-muted-foreground shadow-sm">
+              <Sparkles className="size-4 text-foreground" />
               <span>Turn your ideas into working apps</span>
               <ArrowRight className="size-3.5" />
             </div>
-            <h1 className="text-3xl font-semibold tracking-tight text-white sm:text-5xl">
+            <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-5xl">
               What do you want to create?
             </h1>
-            <p className="mt-3 text-sm text-zinc-400 sm:text-base">
+            <p className="mt-3 text-sm text-muted-foreground sm:text-base">
               Describe an idea and watch it become a working app.
             </p>
 
             <div id="builder" className="mx-auto mt-6 max-w-3xl scroll-mt-20">
               <PromptInput
                 onSubmit={handleSendMessage}
-                className="w-full border-white/10 bg-[#111] text-white shadow-2xl"
+                className="w-full border-border bg-card text-card-foreground shadow-2xl"
                 onImageDrop={handleImageFiles}
                 isDragOver={isDragOver}
                 onDragOver={handleDragOver}
@@ -1154,7 +1154,7 @@ export function HomeClient() {
                   onChange={(e) => setMessage(e.target.value)}
                   value={message}
                   placeholder="Describe what you want to build..."
-                  className="min-h-[88px] px-4 py-4 text-base text-white placeholder:text-zinc-500"
+                  className="min-h-[88px] px-4 py-4 text-base text-foreground placeholder:text-muted-foreground"
                   disabled={isLoading}
                   onKeyDown={(e) => {
                     if (
@@ -1167,7 +1167,7 @@ export function HomeClient() {
                     }
                   }}
                 />
-                <PromptInputToolbar className="border-t border-white/10 px-2 py-1.5">
+                <PromptInputToolbar className="border-t border-border px-2 py-1.5">
                   <PromptInputTools>
                     <PromptInputImageButton
                       onImageSelect={handleImageFiles}
@@ -1180,12 +1180,12 @@ export function HomeClient() {
                           variant="ghost"
                           size="sm"
                           disabled={isLoading}
-                          className="text-zinc-300 hover:bg-white/10 hover:text-white"
+                          className="text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                           aria-label={`Select model, current model: ${modelLabels[selectedModel]}`}
                         >
                           <Sparkles className="size-4" />
                           {modelLabels[selectedModel]}
-                          <ChevronDown className="size-3.5 text-zinc-500" />
+                          <ChevronDown className="size-3.5 text-muted-foreground" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="start" className="w-48">
@@ -1226,7 +1226,7 @@ export function HomeClient() {
                             variant="ghost"
                             size="sm"
                             disabled={isLoading}
-                            className="text-zinc-300 hover:bg-white/10 hover:text-white"
+                            className="text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                             aria-label={`Select project, current project: ${
                               selectedProject?.name || 'No project'
                             }`}
@@ -1235,7 +1235,7 @@ export function HomeClient() {
                             <span className="max-w-36 truncate">
                               {selectedProject?.name || 'Project'}
                             </span>
-                            <ChevronDown className="size-3.5 text-zinc-500" />
+                            <ChevronDown className="size-3.5 text-muted-foreground" />
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="start" className="w-64">
@@ -1279,7 +1279,7 @@ export function HomeClient() {
                           variant="ghost"
                           size="sm"
                           disabled={isLoading}
-                          className="text-zinc-300 hover:bg-white/10 hover:text-white"
+                          className="text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                           aria-label={`Select design system, current design system: ${
                             selectedDesignSystem?.name || 'Default'
                           }`}
@@ -1288,7 +1288,7 @@ export function HomeClient() {
                           <span className="max-w-32 truncate">
                             {selectedDesignSystem?.name || 'Design'}
                           </span>
-                          <ChevronDown className="size-3.5 text-zinc-500" />
+                          <ChevronDown className="size-3.5 text-muted-foreground" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="start" className="w-56">
@@ -1351,11 +1351,11 @@ export function HomeClient() {
                 </PromptInputToolbar>
               </PromptInput>
               {(selectedProjectId || selectedDesignSystem) && (
-                <p className="mt-2 text-xs text-zinc-400">
+                <p className="mt-2 text-xs text-muted-foreground">
                   Selected project and design system apply to this new chat.
                 </p>
               )}
-              <p className="mt-2 text-right text-xs text-zinc-500">
+              <p className="mt-2 text-right text-xs text-muted-foreground">
                 Press ⌘↵ or Ctrl+Enter to send
               </p>
             </div>
@@ -1370,7 +1370,7 @@ export function HomeClient() {
                 <button
                   key={label}
                   type="button"
-                  className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-[#101010] px-4 py-2 text-sm text-zinc-300 transition-colors hover:border-white/20 hover:bg-zinc-900 hover:text-white"
+                  className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-sm text-card-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
                   onClick={() => {
                     setMessage(label)
                     setTimeout(() => {
@@ -1379,7 +1379,7 @@ export function HomeClient() {
                     }, 0)
                   }}
                 >
-                  <Icon className="size-4 text-zinc-400" />
+                  <Icon className="size-4 text-muted-foreground" />
                   {label}
                 </button>
               ))}
@@ -1404,8 +1404,8 @@ export function HomeClient() {
                   onClick={() => setLandingTemplateCategory(category)}
                   className={`rounded-full border px-3 py-1.5 text-xs transition-colors sm:text-sm ${
                     landingTemplateCategory === category
-                      ? 'border-white/25 bg-white/10 text-white'
-                      : 'border-white/10 bg-[#101010] text-zinc-400 hover:bg-zinc-900 hover:text-white'
+                      ? 'border-primary/25 bg-accent text-accent-foreground'
+                      : 'border-border bg-card text-muted-foreground hover:bg-accent hover:text-accent-foreground'
                   }`}
                 >
                   {category}
@@ -1413,7 +1413,7 @@ export function HomeClient() {
               ))}
               <Link
                 href="/templates"
-                className="inline-flex items-center gap-1 px-2 py-1.5 text-xs font-medium text-zinc-200 hover:text-white sm:text-sm"
+                className="inline-flex items-center gap-1 px-2 py-1.5 text-xs font-medium text-foreground hover:text-primary sm:text-sm"
               >
                 Browse all
                 <ArrowRight className="size-3.5" />
@@ -1428,7 +1428,7 @@ export function HomeClient() {
               return (
                 <article
                   key={template.id}
-                  className="group overflow-hidden rounded-xl border border-white/10 bg-[#090909] transition-colors hover:border-white/20"
+                  className="group overflow-hidden rounded-xl border border-border bg-card text-card-foreground transition-colors hover:border-primary/30"
                 >
                   <button
                     type="button"
@@ -1483,12 +1483,12 @@ export function HomeClient() {
                     </div>
                     <div className="p-4">
                       <div className="flex items-center justify-between gap-3">
-                        <h3 className="font-medium text-white">
+                        <h3 className="font-medium text-card-foreground">
                           {template.name}
                         </h3>
-                        <ArrowRight className="size-4 shrink-0 text-zinc-500 transition-transform group-hover:translate-x-1 group-hover:text-white" />
+                        <ArrowRight className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-1 group-hover:text-foreground" />
                       </div>
-                      <p className="mt-1 line-clamp-2 text-sm text-zinc-400">
+                      <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
                         {template.description}
                       </p>
                     </div>
@@ -1505,7 +1505,7 @@ export function HomeClient() {
               <h2 className="text-lg font-semibold">Recent chats</h2>
               <Link
                 href="/chats"
-                className="text-sm text-zinc-400 hover:text-white"
+                className="text-sm text-muted-foreground hover:text-foreground"
               >
                 View all
               </Link>
@@ -1515,7 +1515,7 @@ export function HomeClient() {
                 <Link
                   key={chat.id}
                   href={`/chats/${chat.id}`}
-                  className="truncate rounded-lg border border-white/10 bg-[#090909] p-3 text-sm text-zinc-300 hover:border-white/20 hover:text-white"
+                  className="truncate rounded-lg border border-border bg-card p-3 text-sm text-card-foreground hover:border-primary/30 hover:bg-accent"
                 >
                   {chat.firstMessage}
                 </Link>
@@ -1526,28 +1526,28 @@ export function HomeClient() {
 
         <section
           id="faq"
-          className="mx-auto max-w-7xl scroll-mt-20 border-t border-white/10 px-4 py-12 sm:px-6"
+          className="mx-auto max-w-7xl scroll-mt-20 border-t border-border px-4 py-12 sm:px-6"
         >
           <div className="mx-auto max-w-3xl">
             <h2 className="flex items-center gap-2 text-lg font-semibold">
-              <CircleHelp className="size-5 text-zinc-400" />
+              <CircleHelp className="size-5 text-muted-foreground" />
               Frequently asked questions
             </h2>
             <div className="mt-5 divide-y divide-white/10">
               <details className="py-4">
-                <summary className="cursor-pointer text-sm font-medium text-zinc-200">
+                <summary className="cursor-pointer text-sm font-medium text-foreground">
                   What can I build?
                 </summary>
-                <p className="mt-2 text-sm text-zinc-400">
+                <p className="mt-2 text-sm text-muted-foreground">
                   Describe websites, dashboards, tools, and app ideas. Masidy
                   creates a live preview and editable project files.
                 </p>
               </details>
               <details className="py-4">
-                <summary className="cursor-pointer text-sm font-medium text-zinc-200">
+                <summary className="cursor-pointer text-sm font-medium text-foreground">
                   Can I start from a template?
                 </summary>
-                <p className="mt-2 text-sm text-zinc-400">
+                <p className="mt-2 text-sm text-muted-foreground">
                   Yes. Choose a starter above or browse the full template
                   library, then customize the prompt before building.
                 </p>
