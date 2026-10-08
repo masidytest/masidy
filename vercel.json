@@ -1,0 +1,5 @@
+{
+  "installCommand": "pnpm install",
+  "buildCommand": "tsx lib/db/migrate && next build",
+  "outputDirectory": ".next"
+}

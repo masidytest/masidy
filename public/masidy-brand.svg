@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="512 512 976 976">
+  <defs>
+    <clipPath id="logo">
+      <circle cx="1000" cy="1000" r="488" />
+    </clipPath>
+  </defs>
+  <image
+    href="/masidy.dev.logo.png"
+    width="2000"
+    height="2000"
+    clip-path="url(#logo)"
+  />
+</svg>
