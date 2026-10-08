@@ -19,7 +19,6 @@ import { useToast } from '@/components/ui/use-toast'
 import { RateLimit } from '@/components/rate-limit'
 import { extractCodeFiles } from '@/lib/code-files'
 import { Button } from '@/components/ui/button'
-import { BrandMark } from '@/components/brand-mark'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -245,6 +244,22 @@ export function ChatDetailClient() {
     if (!content) return undefined
     return content.length > 40 ? content.slice(0, 40) + '...' : content
   })()
+  const chatDisplayName =
+    sidebarChat?.name ||
+    sidebarChat?.title ||
+    currentChat?.name ||
+    currentChat?.title ||
+    currentProject?.name ||
+    chatTitle ||
+    `Chat ${chatId.slice(0, 8)}`
+  const projectInitials =
+    chatDisplayName
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0])
+      .join('')
+      .toUpperCase() || 'P'
 
   const handleStreamingUpdate = (content: unknown) => {
     const files = extractCodeFiles(content)
@@ -814,26 +829,13 @@ export function ChatDetailClient() {
     >
       <header className="grid h-[52px] shrink-0 grid-cols-[minmax(0,30%)_minmax(0,1fr)_auto] items-center gap-2 border-b border-border px-3 pl-14 lg:pl-3">
         <div className="flex min-w-0 items-center gap-1.5">
-          <Link
-            href="/"
-            aria-label="Masidy home"
-            title="Masidy"
-            className="flex shrink-0 items-center gap-1.5 rounded-sm hover:opacity-80"
+          <span
+            aria-hidden="true"
+            className="flex size-7 shrink-0 items-center justify-center rounded-full bg-foreground text-[10px] font-semibold text-background"
           >
-            <BrandMark className="size-7 rounded-full" />
-            <span className="hidden text-sm font-semibold tracking-tight sm:inline">
-              Masidy
-            </span>
-          </Link>
-          <h1 className="truncate text-sm font-semibold">
-            {sidebarChat?.name ||
-              sidebarChat?.title ||
-              currentChat?.name ||
-              currentChat?.title ||
-              currentProject?.name ||
-              chatTitle ||
-              `Chat ${chatId.slice(0, 8)}`}
-          </h1>
+            {projectInitials}
+          </span>
+          <h1 className="truncate text-sm font-semibold">{chatDisplayName}</h1>
           <Button
             type="button"
             variant="ghost"
