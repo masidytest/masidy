@@ -55,6 +55,8 @@ const PROMPT_STORAGE_KEY = 'v0-prompt-data'
 
 export interface StoredPromptData {
   message: string
+  resourceIds?: string[]
+  templateId?: string
   attachments: Array<{
     id: string
     fileName: string
@@ -63,13 +65,20 @@ export interface StoredPromptData {
   }>
 }
 
+export interface StoredPromptOptions {
+  resourceIds?: string[]
+  templateId?: string
+}
+
 export const savePromptToStorage = (
   message: string,
   attachments: ImageAttachment[],
+  options: StoredPromptOptions = {},
 ) => {
   try {
     const data: StoredPromptData = {
       message,
+      ...options,
       attachments: attachments.map((att) => ({
         id: att.id,
         fileName: att.file.name,
@@ -379,9 +388,28 @@ export const PromptInputModelSelectValue = ({
   <SelectValue className={cn(className)} {...props} />
 )
 
-export type PromptInputMicButtonProps = ComponentProps<typeof Button> & {
+export type PromptInputMicButtonProps = Omit<
+  ComponentProps<typeof Button>,
+  'onError'
+> & {
   onTranscript?: (transcript: string) => void
   onError?: (error: string) => void
+}
+
+const getSpeechRecognitionErrorMessage = (error: string) => {
+  switch (error) {
+    case 'not-allowed':
+    case 'service-not-allowed':
+      return 'Allow microphone access in your browser settings, then try again.'
+    case 'audio-capture':
+      return 'No microphone was found. Connect a microphone and try again.'
+    case 'network':
+      return 'Your browser could not reach its speech recognition service. Check your connection or try another browser.'
+    case 'no-speech':
+      return 'No speech was detected. Try speaking again.'
+    default:
+      return 'Speech recognition could not start. Check your microphone permissions and try again.'
+  }
 }
 
 export const PromptInputMicButton = ({
@@ -394,9 +422,12 @@ export const PromptInputMicButton = ({
   const [isSupported, setIsSupported] = useState(false)
   const recognitionRef = useRef<SpeechRecognition | null>(null)
   const isCleaningUpRef = useRef(false)
+  const onTranscriptRef = useRef(onTranscript)
+  const onErrorRef = useRef(onError)
+  onTranscriptRef.current = onTranscript
+  onErrorRef.current = onError
 
   useEffect(() => {
-    // Check if speech recognition is supported
     const SpeechRecognition =
       window.SpeechRecognition || window.webkitSpeechRecognition
     if (SpeechRecognition) {
@@ -415,16 +446,14 @@ export const PromptInputMicButton = ({
       recognition.onresult = (event: SpeechRecognitionEvent) => {
         if (!isCleaningUpRef.current) {
           const transcript = event.results[0][0].transcript
-          onTranscript?.(transcript)
+          onTranscriptRef.current?.(transcript)
           setIsListening(false)
         }
       }
 
       recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
-        // Don't report "aborted" errors as they're usually from cleanup or natural timeout
         if (event.error !== 'aborted' && !isCleaningUpRef.current) {
-          console.error('Speech recognition error:', event.error)
-          onError?.(event.error)
+          onErrorRef.current?.(getSpeechRecognitionErrorMessage(event.error))
         }
         setIsListening(false)
       }
@@ -444,11 +473,11 @@ export const PromptInputMicButton = ({
         try {
           recognitionRef.current.abort()
         } catch (error) {
-          // Ignore errors during cleanup
+          console.warn('Error cleaning up speech recognition:', error)
         }
       }
     }
-  }, [onTranscript, onError])
+  }, [])
 
   const toggleListening = useCallback(() => {
     if (!recognitionRef.current || isCleaningUpRef.current) return
@@ -464,11 +493,17 @@ export const PromptInputMicButton = ({
       try {
         recognitionRef.current.start()
       } catch (error) {
-        console.error('Error starting speech recognition:', error)
-        onError?.('Failed to start speech recognition')
+        console.warn('Speech recognition could not start:', error)
+        onErrorRef.current?.(
+          getSpeechRecognitionErrorMessage(
+            error instanceof DOMException && error.name === 'NotAllowedError'
+              ? 'not-allowed'
+              : 'start-failed',
+          ),
+        )
       }
     }
-  }, [isListening, onError])
+  }, [isListening])
 
   if (!isSupported) {
     return null

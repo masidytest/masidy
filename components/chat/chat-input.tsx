@@ -15,6 +15,7 @@ import {
   type ImageAttachment,
 } from '@/components/ai-elements/prompt-input'
 import { Suggestions, Suggestion } from '@/components/ai-elements/suggestion'
+import { useToast } from '@/components/ui/use-toast'
 import { useState, useCallback, useEffect } from 'react'
 
 interface ChatInputProps {
@@ -44,6 +45,7 @@ export function ChatInput({
   textareaRef,
 }: ChatInputProps) {
   const [isDragOver, setIsDragOver] = useState(false)
+  const { toast } = useToast()
 
   const handleImageFiles = useCallback(
     async (files: File[]) => {
@@ -155,7 +157,11 @@ export function ChatInput({
                   setMessage(message + (message ? ' ' : '') + transcript)
                 }}
                 onError={(error) => {
-                  console.error('Speech recognition error:', error)
+                  toast({
+                    title: 'Microphone unavailable',
+                    description: error,
+                    variant: 'destructive',
+                  })
                 }}
                 disabled={isGenerating}
               />

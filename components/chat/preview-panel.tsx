@@ -79,6 +79,7 @@ interface PreviewPanelProps {
   onShareClick?: () => void
   onDeployClick?: () => void | Promise<void>
   onCodeClick?: () => void
+  externalUrl?: string
   forceTab?: 'preview' | 'code'
 }
 
@@ -95,6 +96,7 @@ export function PreviewPanel({
   onShareClick,
   onDeployClick,
   onCodeClick,
+  externalUrl,
   forceTab,
 }: PreviewPanelProps) {
   const [activeTab, setActiveTab] = useState<'preview' | 'code'>('preview')
@@ -115,6 +117,7 @@ export function PreviewPanel({
         source: file.content,
       }))
   const previewUrl = currentChat?.demo || currentChat?.latestVersion?.demoUrl
+  const openUrl = externalUrl || previewUrl
 
   return (
     <div
@@ -227,12 +230,16 @@ export function PreviewPanel({
 
           <div className="flex shrink-0 items-center">
             <WebPreviewNavigationButton
-              aria-label="Open preview in a new tab"
-              tooltip="Open in new tab"
-              disabled={!previewUrl}
+              aria-label={
+                externalUrl
+                  ? 'Open published project in a new tab'
+                  : 'Open preview in a new tab'
+              }
+              tooltip={externalUrl ? 'Open published site' : 'Open preview'}
+              disabled={!openUrl}
               onClick={() => {
-                if (previewUrl) {
-                  window.open(previewUrl, '_blank', 'noopener,noreferrer')
+                if (openUrl) {
+                  window.open(openUrl, '_blank', 'noopener,noreferrer')
                 }
               }}
             >

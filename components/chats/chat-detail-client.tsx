@@ -59,6 +59,8 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
+import { zipSync, strToU8 } from 'fflate'
+import { isBrandedProjectDomain } from '@/lib/branded-domain'
 
 type ChatPrivacy = 'public' | 'private' | 'team' | 'team-edit' | 'unlisted'
 
@@ -99,6 +101,9 @@ export function ChatDetailClient() {
   const [isGenerating, setIsGenerating] = useState(false)
   const [showRateLimit, setShowRateLimit] = useState(false)
   const [isInviteOpen, setIsInviteOpen] = useState(false)
+  const [isProjectSettingsOpen, setIsProjectSettingsOpen] = useState(false)
+  const [selectedProjectId, setSelectedProjectId] = useState('')
+  const [isAssigningProject, setIsAssigningProject] = useState(false)
   const [isDuplicatingChat, setIsDuplicatingChat] = useState(false)
   const [isRenameOpen, setIsRenameOpen] = useState(false)
   const [renameChatName, setRenameChatName] = useState('')
@@ -143,6 +148,21 @@ export function ChatDetailClient() {
         chatsResult?.data.find((chat) => chat.id === chatId)?.projectId),
   )
   const sidebarChat = chatsResult?.data.find((chat) => chat.id === chatId)
+  const assignedProjectId =
+    currentChat?.projectId || sidebarChat?.projectId
+  const { data: projectDomainsResult } = useSWR<{
+    data: Array<{ name: string; verified: boolean }>
+  }>(
+    session?.user?.id && assignedProjectId
+      ? `/api/projects/${encodeURIComponent(assignedProjectId)}/domains`
+      : null,
+  )
+  const verifiedBrandedDomain = projectDomainsResult?.data.find(
+    (domain) => domain.verified && isBrandedProjectDomain(domain.name),
+  )
+  const brandedPreviewUrl = verifiedBrandedDomain
+    ? `https://${verifiedBrandedDomain.name}`
+    : undefined
   const {
     data: versionsResponse,
     error: versionsError,
@@ -331,9 +351,29 @@ export function ChatDetailClient() {
       }
       toast({
         title: 'Project published',
-        description: 'The deployed version is ready to open.',
+        description:
+          result &&
+          typeof result === 'object' &&
+          'brandedUrl' in result &&
+          typeof result.brandedUrl === 'string'
+            ? `Your project is available at ${result.brandedUrl}`
+            : result &&
+                typeof result === 'object' &&
+                'brandingError' in result &&
+                typeof result.brandingError === 'string'
+              ? `Deployment succeeded, but the branded URL could not be set up: ${result.brandingError}`
+              : 'The deployed version is ready to open.',
       })
-      window.open(result.webUrl, '_blank', 'noopener,noreferrer')
+      const destination =
+        'brandedUrl' in result && typeof result.brandedUrl === 'string'
+          ? result.brandedUrl
+          : result.webUrl
+      if (currentChat.projectId) {
+        void mutate(
+          `/api/projects/${encodeURIComponent(currentChat.projectId)}/domains`,
+        )
+      }
+      window.open(destination, '_blank', 'noopener,noreferrer')
     } catch (error) {
       console.error('Could not publish project:', error)
       toast({
@@ -495,22 +535,52 @@ export function ChatDetailClient() {
 
   const handleDownloadChatZip = async () => {
     try {
-      const response = await fetch(
-        `/api/chats/${encodeURIComponent(chatId)}/download`,
-      )
-      if (!response.ok) {
-        const result: unknown = await response.json().catch(() => null)
-        const errorMessage =
-          result &&
-          typeof result === 'object' &&
-          'error' in result &&
-          typeof result.error === 'string'
-            ? result.error
-            : 'Could not download the project ZIP.'
-        throw new Error(errorMessage)
+      const hasCompletedVersion =
+        currentChat?.latestVersion?.status === 'completed'
+      let blob: Blob
+
+      if (hasCompletedVersion) {
+        const response = await fetch(
+          `/api/chats/${encodeURIComponent(chatId)}/download`,
+        )
+        if (!response.ok) {
+          const result: unknown = await response.json().catch(() => null)
+          const errorMessage =
+            result &&
+            typeof result === 'object' &&
+            'error' in result &&
+            typeof result.error === 'string'
+              ? result.error
+              : 'Could not download the project ZIP.'
+          throw new Error(errorMessage)
+        }
+        blob = await response.blob()
+      } else {
+        if (changedFiles.length === 0) {
+          throw new Error(
+            'There are no generated files to download yet. Generate some code first.',
+          )
+        }
+
+        const files: Record<string, Uint8Array> = {}
+        for (const file of changedFiles) {
+          const fileName = file.fileName.replace(/\\/g, '/').trim()
+          if (
+            !fileName ||
+            fileName.startsWith('/') ||
+            fileName.includes('\0') ||
+            fileName.split('/').some((part) => !part || part === '.' || part === '..')
+          ) {
+            throw new Error('A generated file has an invalid path.')
+          }
+          files[fileName] = strToU8(file.source)
+        }
+        blob = new Blob([zipSync(files, { level: 6 })], {
+          type: 'application/zip',
+        })
       }
 
-      const url = URL.createObjectURL(await response.blob())
+      const url = URL.createObjectURL(blob)
       const anchor = document.createElement('a')
       anchor.href = url
       const fileName = (currentChat?.name || chatId)
@@ -529,6 +599,98 @@ export function ChatDetailClient() {
           error instanceof Error ? error.message : 'Please try again.',
         variant: 'destructive',
       })
+    }
+  }
+
+  const assignChatToProject = async (projectId: string) => {
+    const response = await fetch(
+      `/api/projects/${encodeURIComponent(projectId)}/assign`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chatId }),
+      },
+    )
+    const result: unknown = await response.json().catch(() => null)
+    if (!response.ok) {
+      const message =
+        result &&
+        typeof result === 'object' &&
+        'error' in result &&
+        typeof result.error === 'string'
+          ? result.error
+          : 'Could not add this chat to the project.'
+      throw new Error(message)
+    }
+
+    await refreshCurrentChat()
+    void mutate('/api/chats')
+    setIsProjectSettingsOpen(false)
+    router.push(`/projects/${encodeURIComponent(projectId)}`)
+  }
+
+  const handleAssignChatToProject = async () => {
+    if (!selectedProjectId) return
+    setIsAssigningProject(true)
+    try {
+      await assignChatToProject(selectedProjectId)
+    } catch (error) {
+      console.error('Could not open project settings:', error)
+      toast({
+        title: 'Could not open project settings',
+        description:
+          error instanceof Error ? error.message : 'Please try again.',
+        variant: 'destructive',
+      })
+    } finally {
+      setIsAssigningProject(false)
+    }
+  }
+
+  const handleCreateProjectForChat = async () => {
+    setIsAssigningProject(true)
+    try {
+      const nameSource =
+        currentChat?.name ||
+        currentChat?.title ||
+        chatHistory.find((item) => item.type === 'user')?.content
+      const name =
+        typeof nameSource === 'string' && nameSource.trim()
+          ? nameSource.trim().slice(0, 80)
+          : 'New project'
+      const response = await fetch('/api/projects', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name }),
+      })
+      const result: unknown = await response.json().catch(() => null)
+      if (
+        !response.ok ||
+        !result ||
+        typeof result !== 'object' ||
+        !('id' in result) ||
+        typeof result.id !== 'string'
+      ) {
+        const message =
+          result &&
+          typeof result === 'object' &&
+          'error' in result &&
+          typeof result.error === 'string'
+            ? result.error
+            : 'Could not create a project for this chat.'
+        throw new Error(message)
+      }
+      await assignChatToProject(result.id)
+    } catch (error) {
+      console.error('Could not create project for chat:', error)
+      toast({
+        title: 'Could not create project',
+        description:
+          error instanceof Error ? error.message : 'Please try again.',
+        variant: 'destructive',
+      })
+    } finally {
+      setIsAssigningProject(false)
     }
   }
 
@@ -884,8 +1046,14 @@ export function ChatDetailClient() {
               <DropdownMenuItem
                 onClick={() => void handleDownloadChatZip()}
                 disabled={
-                  !currentChat?.latestVersion ||
-                  currentChat.latestVersion.status !== 'completed'
+                  currentChat?.latestVersion?.status !== 'completed' &&
+                  changedFiles.length === 0
+                }
+                title={
+                  currentChat?.latestVersion?.status !== 'completed' &&
+                  changedFiles.length === 0
+                    ? 'Generate code before downloading'
+                    : undefined
                 }
               >
                 <Download className="mr-2 size-4" />
@@ -902,7 +1070,13 @@ export function ChatDetailClient() {
                   </Link>
                 </DropdownMenuItem>
               ) : (
-                <DropdownMenuItem disabled>
+                <DropdownMenuItem
+                  onSelect={() => {
+                    setSelectedProjectId(projectsResult?.data[0]?.id || '')
+                    setIsProjectSettingsOpen(true)
+                  }}
+                  disabled={!session?.user?.id}
+                >
                   <Settings className="mr-2 size-4" />
                   Settings
                 </DropdownMenuItem>
@@ -998,6 +1172,68 @@ export function ChatDetailClient() {
             >
               {isRenamingChat ? 'Renaming...' : 'Rename'}
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={isProjectSettingsOpen}
+        onOpenChange={setIsProjectSettingsOpen}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Set up project settings</DialogTitle>
+            <DialogDescription>
+              Project settings belong to a project. Add this chat to an
+              existing project or create a new project to open its settings.
+            </DialogDescription>
+          </DialogHeader>
+          {projectsResult?.data.length ? (
+            <div className="space-y-2">
+              <label
+                htmlFor="chat-settings-project"
+                className="text-sm font-medium"
+              >
+                Existing project
+              </label>
+              <select
+                id="chat-settings-project"
+                value={selectedProjectId}
+                onChange={(event) => setSelectedProjectId(event.target.value)}
+                disabled={isAssigningProject}
+                className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+              >
+                {projectsResult.data.map((project) => (
+                  <option key={project.id} value={project.id}>
+                    {project.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              You do not have a project yet. Create one for this chat to
+              manage its settings.
+            </p>
+          )}
+          <DialogFooter className="flex-col sm:flex-row">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => void handleCreateProjectForChat()}
+              disabled={isAssigningProject}
+            >
+              {isAssigningProject ? 'Creating…' : 'Create project'}
+            </Button>
+            {projectsResult?.data.length ? (
+              <Button
+                type="button"
+                onClick={() => void handleAssignChatToProject()}
+                disabled={isAssigningProject || !selectedProjectId}
+              >
+                {isAssigningProject ? 'Opening…' : 'Add chat and open settings'}
+              </Button>
+            ) : null}
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -1118,6 +1354,7 @@ export function ChatDetailClient() {
               changedFiles={changedFiles}
               versionHistory={versionHistory}
               currentVersion={currentVersion}
+              externalUrl={brandedPreviewUrl}
               onVersionSelect={handleVersionSelect}
               onShareClick={handleShare}
               onDeployClick={handlePublish}

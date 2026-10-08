@@ -30,9 +30,12 @@ Masidy uses a dual-mode database strategy:
    ```env
    V0_API_KEY0=v1:team_...       # Or configure V0_API_KEYS with authorized keys
    AUTH_SECRET=some-random-secret  # NextAuth secret (run: openssl rand -base64 32)
+   VERCEL_TOKEN_KEY=your-vercel-token # Required for Vercel project domains
+   VERCEL_TEAM_ID=team_...          # Team ID for the Vercel project owner
    ```
 
    Leave `TURSO_DATABASE_URL` and `TURSO_AUTH_TOKEN` unset — the app will automatically use a local SQLite file.
+   For branded project URLs, add `masidy.app` to the Vercel team, configure wildcard DNS for `*.masidy.app`, and set both Vercel variables above. Publishing a completed project then assigns a verified `<project-name>.masidy.app` domain where available.
 
 3. **Run database migrations**
 
@@ -133,6 +136,8 @@ Click **Deploy**. Vercel will:
 | `AUTH_SECRET`                                                 | ✅ Yes          | ✅ Yes           | NextAuth.js secret for signing session tokens                               |
 | `TURSO_DATABASE_URL`                                          | ❌ No           | ✅ Yes           | libSQL URL for the Turso remote database                                    |
 | `TURSO_AUTH_TOKEN`                                            | ❌ No           | ✅ Yes (implied) | Auth token for Turso database access                                        |
+| `VERCEL_TOKEN_KEY`                                            | ❌ No           | ❌ No            | Vercel API token for managing project domains                                |
+| `VERCEL_TEAM_ID`                                              | ❌ No           | ❌ No            | Vercel team ID; required with the token for project-domain operations         |
 
 ---
 

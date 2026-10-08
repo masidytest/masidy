@@ -6,6 +6,8 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { useSession } from 'next-auth/react'
 import useSWR from 'swr'
+import { useStreaming } from '@/contexts/streaming-context'
+import { guestRegex } from '@/lib/constants'
 import {
   Activity,
   ArrowRight,
@@ -50,6 +52,7 @@ import { ChatMessages } from '@/components/chat/chat-messages'
 import { ChatInput } from '@/components/chat/chat-input'
 import { PreviewPanel } from '@/components/chat/preview-panel'
 import { BrandMark } from '@/components/brand-mark'
+import { LegalFooter } from '@/components/legal/legal-footer'
 import { ResizableLayout } from '@/components/shared/resizable-layout'
 import { BottomToolbar } from '@/components/shared/bottom-toolbar'
 import { RateLimit } from '@/components/rate-limit'
@@ -158,6 +161,7 @@ export function HomeClient() {
   const [isLoading, setIsLoading] = useState(false)
   const [showChatInterface, setShowChatInterface] = useState(false)
   const [attachments, setAttachments] = useState<ImageAttachment[]>([])
+  const [isPromptStorageReady, setIsPromptStorageReady] = useState(false)
   const [isDragOver, setIsDragOver] = useState(false)
   const [chatHistory, setChatHistory] = useState<
     Array<{
@@ -205,7 +209,12 @@ export function HomeClient() {
     DesignSystemPreset[]
   >([])
   const versionCountRef = useRef(0)
+  const pendingHandoffStreamRef = useRef<ReadableStream<Uint8Array> | null>(
+    null,
+  )
+  const pendingHandoffMessageRef = useRef('')
   const router = useRouter()
+  const { startHandoff } = useStreaming()
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   // Auth session for Recent Chats
@@ -386,6 +395,8 @@ export function HomeClient() {
     const storedData = loadPromptFromStorage()
     if (storedData) {
       setMessage((current) => current || storedData.message)
+      setSelectedResourceIds(storedData.resourceIds ?? [])
+      setSelectedTemplateId(storedData.templateId ?? '')
       if (storedData.attachments.length > 0) {
         const restoredAttachments = storedData.attachments.map(
           createImageAttachmentFromStored,
@@ -393,17 +404,29 @@ export function HomeClient() {
         setAttachments(restoredAttachments)
       }
     }
+    setIsPromptStorageReady(true)
   }, [])
 
   // Save prompt data to sessionStorage whenever message or attachments change
   useEffect(() => {
+    if (!isPromptStorageReady) return
+
     if (message.trim() || attachments.length > 0) {
-      savePromptToStorage(message, attachments)
+      savePromptToStorage(message, attachments, {
+        resourceIds: selectedResourceIds,
+        templateId: selectedTemplateId,
+      })
     } else {
       // Clear sessionStorage if both message and attachments are empty
       clearPromptFromStorage()
     }
-  }, [message, attachments])
+  }, [
+    isPromptStorageReady,
+    message,
+    attachments,
+    selectedResourceIds,
+    selectedTemplateId,
+  ])
 
   // Image attachment handlers
   const handleImageFiles = async (files: File[]) => {
@@ -439,6 +462,18 @@ export function HomeClient() {
 
     const userMessage = message.trim()
     const currentAttachments = [...attachments]
+
+    if (
+      !session?.user?.id ||
+      guestRegex.test(session.user.email ?? '')
+    ) {
+      savePromptToStorage(userMessage, currentAttachments, {
+        resourceIds: selectedResourceIds,
+        templateId: selectedTemplateId,
+      })
+      router.push(`/login?returnTo=${encodeURIComponent('/?resumePrompt=1')}`)
+      return
+    }
 
     // Clear sessionStorage immediately upon submission
     clearPromptFromStorage()
@@ -513,6 +548,9 @@ export function HomeClient() {
         throw new Error('No response body for streaming')
       }
 
+      const [displayStream, handoffStream] = response.body.tee()
+      pendingHandoffStreamRef.current = handoffStream
+      pendingHandoffMessageRef.current = userMessage
       setIsLoading(false)
 
       // Add streaming assistant response
@@ -522,7 +560,7 @@ export function HomeClient() {
           type: 'assistant',
           content: [],
           isStreaming: true,
-          stream: response.body,
+          stream: displayStream,
         },
       ])
     } catch (error) {
@@ -570,6 +608,8 @@ export function HomeClient() {
   const handleChatData = async (chatData: any) => {
     if (chatData.id) {
       const isNewChat = !currentChatIdRef.current
+      const shouldNavigate =
+        isNewChat && pendingHandoffStreamRef.current !== null
 
       // Only set currentChat if it's not already set or if this is the main chat object
       if (isNewChat || chatData.object === 'chat') {
@@ -577,8 +617,17 @@ export function HomeClient() {
         setCurrentChatId(chatData.id)
         setCurrentChat({ id: chatData.id })
 
-        // Update URL without triggering Next.js routing
-        window.history.pushState(null, '', `/chats/${chatData.id}`)
+        if (shouldNavigate) {
+          const handoffStream = pendingHandoffStreamRef.current
+          if (handoffStream) {
+            startHandoff(
+              chatData.id,
+              handoffStream,
+              pendingHandoffMessageRef.current,
+            )
+            pendingHandoffStreamRef.current = null
+          }
+        }
       }
 
       // Create ownership record only for brand-new chats
@@ -596,6 +645,10 @@ export function HomeClient() {
         } catch (error) {
           console.error('Failed to create chat ownership:', error)
         }
+      }
+
+      if (shouldNavigate) {
+        router.push(`/chats/${encodeURIComponent(chatData.id)}`)
       }
     }
   }
@@ -696,6 +749,11 @@ export function HomeClient() {
     const chatId = currentChatIdRef.current
     if (!chatId) {
       console.warn('No chat ID available when streaming completed')
+      const pendingHandoffStream = pendingHandoffStreamRef.current
+      pendingHandoffStreamRef.current = null
+      if (pendingHandoffStream) {
+        await pendingHandoffStream.cancel()
+      }
       return
     }
 
@@ -1277,7 +1335,11 @@ export function HomeClient() {
                         )
                       }}
                       onError={(error) => {
-                        console.error('Speech recognition error:', error)
+                        toast({
+                          title: 'Microphone unavailable',
+                          description: error,
+                          variant: 'destructive',
+                        })
                       }}
                       disabled={isLoading}
                     />
@@ -1494,6 +1556,7 @@ export function HomeClient() {
           </div>
         </section>
       </main>
+      <LegalFooter className="mt-auto" />
     </div>
   )
 }

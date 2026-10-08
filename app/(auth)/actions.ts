@@ -22,11 +22,31 @@ interface ActionResult {
   message: string
 }
 
+function getPostAuthRedirect(returnTo: FormDataEntryValue | null): string {
+  if (
+    typeof returnTo !== 'string' ||
+    !returnTo.startsWith('/') ||
+    returnTo.startsWith('//') ||
+    /[\\\r\n]/.test(returnTo)
+  ) {
+    return '/?refresh=session'
+  }
+
+  const destination = new URL(returnTo, 'http://localhost')
+  if (destination.origin !== 'http://localhost') {
+    return '/?refresh=session'
+  }
+
+  destination.searchParams.set('refresh', 'session')
+  return `${destination.pathname}${destination.search}${destination.hash}`
+}
+
 export async function signInAction(
   _prevState: ActionResult | undefined,
   formData: FormData,
 ): Promise<ActionResult> {
   try {
+    const postAuthRedirect = getPostAuthRedirect(formData.get('returnTo'))
     const validatedData = signInSchema.parse({
       email: formData.get('email'),
       password: formData.get('password'),
@@ -39,7 +59,7 @@ export async function signInAction(
     })
 
     revalidatePath('/')
-    redirect('/?refresh=session')
+    redirect(postAuthRedirect)
   } catch (error) {
     if (error instanceof z.ZodError) {
       return {
@@ -73,6 +93,7 @@ export async function signUpAction(
   formData: FormData,
 ): Promise<ActionResult> {
   try {
+    const postAuthRedirect = getPostAuthRedirect(formData.get('returnTo'))
     const validatedData = signUpSchema.parse({
       email: formData.get('email'),
       password: formData.get('password'),
@@ -104,7 +125,7 @@ export async function signUpAction(
     }
 
     revalidatePath('/')
-    redirect('/?refresh=session')
+    redirect(postAuthRedirect)
   } catch (error) {
     if (error instanceof z.ZodError) {
       return {

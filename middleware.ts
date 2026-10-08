@@ -36,6 +36,12 @@ export async function middleware(request: NextRequest) {
   })
 
   if (!token) {
+    if (
+      ['/privacy', '/terms', '/cookies', '/acceptable-use'].includes(pathname)
+    ) {
+      return NextResponse.next()
+    }
+
     // Allow API routes to proceed without authentication for anonymous chat creation
     if (pathname.startsWith('/api/')) {
       return NextResponse.next()
@@ -46,8 +52,8 @@ export async function middleware(request: NextRequest) {
       return NextResponse.next()
     }
 
-    // Allow homepage for anonymous users
-    if (pathname === '/') {
+    // Allow public landing and template pages for anonymous users
+    if (pathname === '/' || pathname === '/templates') {
       return NextResponse.next()
     }
 

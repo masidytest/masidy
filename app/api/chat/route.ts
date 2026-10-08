@@ -15,6 +15,7 @@ import {
   anonymousEntitlements,
 } from '@/lib/entitlements'
 import { ChatSDKError } from '@/lib/errors'
+import { guestRegex } from '@/lib/constants'
 import {
   getRepositoryTemplateById,
   getGenerationResourceInstructions,
@@ -48,6 +49,19 @@ function getClientIP(request: NextRequest): string {
 export async function POST(request: NextRequest) {
   try {
     const session = await auth()
+    if (
+      !session?.user?.id ||
+      guestRegex.test(session.user.email ?? '')
+    ) {
+      return NextResponse.json(
+        {
+          error: 'Sign in or create an account before generating an app.',
+          code: 'authentication_required',
+        },
+        { status: 401 },
+      )
+    }
+
     const {
       message,
       chatId,

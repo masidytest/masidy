@@ -3,6 +3,15 @@ import { auth } from '@/app/(auth)/auth'
 import { getChatIdsByUserId, getChatOwnership } from '@/lib/db/queries'
 import { getAccessibleProjectIds } from '@/lib/project-access'
 import { v0 } from '@/lib/v0-key-pool'
+import {
+  addProjectDomain,
+  getProjectDomains,
+  VercelPlatformError,
+} from '@/lib/vercel-platform'
+import {
+  getBrandedProjectDomainCandidates,
+  isBrandedProjectDomain,
+} from '@/lib/branded-domain'
 
 export async function GET(
   _request: NextRequest,
@@ -139,7 +148,87 @@ export async function POST(
       chatId: body.chatId,
       versionId: body.versionId,
     })
-    return NextResponse.json(deployment, { status: 201 })
+
+    let brandedUrl: string | undefined
+    let brandingError: string | undefined
+    try {
+      const project = await v0.projects.getById({ projectId })
+      if (!project.vercelProjectId) {
+        throw new Error(
+          'This project is not linked to a Vercel project, so it cannot use a masidy.app URL.',
+        )
+      }
+
+      const domains = await getProjectDomains(project.vercelProjectId)
+      const candidates = getBrandedProjectDomainCandidates(
+        project.name,
+        projectId,
+      )
+      const existingBrandedDomain = domains.find(
+        (domain) => domain.verified && isBrandedProjectDomain(domain.name),
+      )
+      if (existingBrandedDomain) {
+        brandedUrl = `https://${existingBrandedDomain.name}`
+      } else {
+        const existingCandidate = domains.find((domain) =>
+          candidates.includes(domain.name.toLowerCase()),
+        )
+        if (existingCandidate) {
+          throw new Error(
+            `${existingCandidate.name} is attached but not verified yet. Complete its Vercel domain verification, then publish again.`,
+          )
+        }
+
+        let lastError: unknown
+
+        for (const domain of candidates) {
+          try {
+            const addedDomain = await addProjectDomain(
+              project.vercelProjectId,
+              domain,
+            )
+            if (!addedDomain.verified) {
+              throw new Error(
+                `${domain} was added, but Vercel has not verified it yet.`,
+              )
+            }
+            brandedUrl = `https://${addedDomain.name}`
+            break
+          } catch (error) {
+            lastError = error
+            if (
+              !(error instanceof VercelPlatformError) ||
+              error.status !== 409
+            ) {
+              throw error
+            }
+          }
+        }
+
+        if (!brandedUrl) {
+          throw (
+            lastError instanceof Error
+              ? lastError
+              : new Error('Could not assign a branded project domain.')
+          )
+        }
+      }
+    } catch (error) {
+      brandingError =
+        error instanceof Error
+          ? error.message
+          : 'Could not configure the branded project domain.'
+      console.error('Could not configure branded project domain:', error)
+    }
+
+    return NextResponse.json(
+      {
+        ...deployment,
+        ...(brandedUrl ? { brandedUrl } : {}),
+        ...(brandingError ? { brandingError } : {}),
+      },
+      { status: 201 },
+    )
   } catch (error) {
     console.error('Project deployment creation error:', error)
     return NextResponse.json(

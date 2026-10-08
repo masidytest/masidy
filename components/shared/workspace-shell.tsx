@@ -157,7 +157,13 @@ export function WorkspaceShell({ children }: WorkspaceShellProps) {
     router.push(`/chats/${id}`)
   }
 
-  if (isAuthPage || pathname === '/') return <>{children}</>
+  if (
+    isAuthPage ||
+    pathname === '/' ||
+    ['/privacy', '/terms', '/cookies', '/acceptable-use'].includes(pathname)
+  ) {
+    return <>{children}</>
+  }
 
   const sidebar = (
     <aside

@@ -8,9 +8,10 @@ import Link from 'next/link'
 
 interface AuthFormProps {
   type: 'signin' | 'signup'
+  returnTo?: string
 }
 
-export function AuthForm({ type }: AuthFormProps) {
+export function AuthForm({ type, returnTo = '/' }: AuthFormProps) {
   const [state, formAction, isPending] = useActionState(
     type === 'signin' ? signInAction : signUpAction,
     undefined,
@@ -18,6 +19,7 @@ export function AuthForm({ type }: AuthFormProps) {
 
   return (
     <form action={formAction} className="space-y-4">
+      <input type="hidden" name="returnTo" value={returnTo} />
       <div>
         <Input
           id="email"
@@ -55,18 +57,38 @@ export function AuthForm({ type }: AuthFormProps) {
             : 'Create Account'}
       </Button>
 
+      {type === 'signup' && (
+        <p className="text-center text-xs leading-5 text-muted-foreground">
+          By creating an account, you agree to our{' '}
+          <Link href="/terms" className="underline hover:text-foreground">
+            Terms
+          </Link>{' '}
+          and acknowledge the{' '}
+          <Link href="/privacy" className="underline hover:text-foreground">
+            Privacy Policy
+          </Link>
+          .
+        </p>
+      )}
+
       <div className="text-center text-sm text-muted-foreground">
         {type === 'signin' ? (
           <>
             Don&apos;t have an account?{' '}
-            <Link href="/register" className="text-primary hover:underline">
+            <Link
+              href={`/register?returnTo=${encodeURIComponent(returnTo)}`}
+              className="text-primary hover:underline"
+            >
               Sign up
             </Link>
           </>
         ) : (
           <>
             Already have an account?{' '}
-            <Link href="/login" className="text-primary hover:underline">
+            <Link
+              href={`/login?returnTo=${encodeURIComponent(returnTo)}`}
+              className="text-primary hover:underline"
+            >
               Sign in
             </Link>
           </>
