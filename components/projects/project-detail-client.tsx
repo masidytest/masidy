@@ -9,6 +9,7 @@ import {
   BadgeCheck,
   CircleAlert,
   CopyPlus,
+  Database,
   ExternalLink,
   FolderKanban,
   Globe2,
@@ -33,6 +34,7 @@ import {
 import { useToast } from '@/components/ui/use-toast'
 import { useLocale } from '@/components/providers/locale-provider'
 import { managedResourceLimits } from '@/lib/managed-resource-limits'
+import type { MarketplaceMetadataField } from '@/lib/vercel-marketplace-utils'
 
 interface ProjectChat {
   id: string
@@ -91,10 +93,43 @@ interface ProjectDomain {
   }>
 }
 
+interface MarketplaceProduct {
+  installationId: string
+  integrationId: string
+  integrationSlug: string
+  integrationName: string
+  productId: string
+  productSlug: string
+  productName: string
+  description?: string
+  freePlan: { id: string; name: string } | null
+  metadataFields: MarketplaceMetadataField[]
+  metadataSupported: boolean
+}
+
+interface MarketplaceIntegration {
+  id: string
+  provider: string
+  productSlug: string
+  productName: string
+  resourceName: string
+  status: 'connected' | 'disconnected'
+}
+
+interface MarketplaceResponse {
+  catalog: MarketplaceProduct[]
+  integrations: MarketplaceIntegration[]
+  canManage: boolean
+}
+
 const fetcher = async (url: string) => {
   const response = await fetch(url)
   const data = await response.json()
-  if (!response.ok) throw new Error(data.error || 'Could not load project.')
+  if (!response.ok) {
+    throw new Error(
+      data.details || data.error || 'Could not load project.',
+    )
+  }
   return data
 }
 
@@ -152,6 +187,17 @@ export function ProjectDetailClient() {
       : null,
     fetcher,
   )
+  const {
+    data: marketplace,
+    error: marketplaceError,
+    isLoading: marketplaceLoading,
+    mutate: refreshMarketplace,
+  } = useSWR<MarketplaceResponse>(
+    projectId
+      ? `/api/projects/${encodeURIComponent(projectId)}/integrations`
+      : null,
+    fetcher,
+  )
   const [name, setName] = useState('')
   const [instructions, setInstructions] = useState('')
   const [privacy, setPrivacy] = useState<'private' | 'team'>('private')
@@ -172,6 +218,11 @@ export function ProjectDetailClient() {
   const [envToDelete, setEnvToDelete] =
     useState<ProjectEnvironmentVariable | null>(null)
   const [isDeletingEnv, setIsDeletingEnv] = useState(false)
+  const [selectedMarketplaceProduct, setSelectedMarketplaceProduct] =
+    useState<MarketplaceProduct | null>(null)
+  const [marketplaceActionId, setMarketplaceActionId] = useState<string | null>(
+    null,
+  )
   const [domainName, setDomainName] = useState('')
   const [isAddingDomain, setIsAddingDomain] = useState(false)
   const [domainAction, setDomainAction] = useState<string | null>(null)
@@ -284,7 +335,7 @@ export function ProjectDetailClient() {
     setDeployingChatId(chatId)
     try {
       const response = await fetch(
-        `/api/projects/${encodeURIComponent(projectId)}/deployments`,
+        `/api/projects/${encodeURIComponent(projectId)}/vercel-deployments`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -302,9 +353,9 @@ export function ProjectDetailClient() {
       }
       await refreshDeployments()
       toast({
-        title: 'Deployment created',
+        title: 'Vercel deployment started',
         description: result.webUrl
-          ? `The deployment is ready at ${result.webUrl}`
+          ? `Your production deployment is available at ${result.webUrl}`
           : 'The deployment request was accepted.',
       })
     } catch (deployError) {
@@ -418,6 +469,97 @@ export function ProjectDetailClient() {
       })
     } finally {
       setIsDeletingEnv(false)
+    }
+  }
+
+  const addMarketplaceResource = async (
+    event: React.FormEvent<HTMLFormElement>,
+    product: MarketplaceProduct,
+  ) => {
+    event.preventDefault()
+    setMarketplaceActionId(product.productId)
+    try {
+      const formData = new FormData(event.currentTarget)
+      const metadataEntries: Array<[string, string | boolean]> = []
+      for (const field of product.metadataFields) {
+        const value = formData.get(field.name)
+        if (field.type === 'boolean') {
+          metadataEntries.push([field.name, value === 'on'])
+        } else if (typeof value === 'string' && value !== '') {
+          metadataEntries.push([field.name, value])
+        }
+      }
+      const metadata = Object.fromEntries(metadataEntries)
+      const response = await fetch(
+        `/api/projects/${encodeURIComponent(projectId)}/integrations`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            installationId: product.installationId,
+            productId: product.productId,
+            metadata,
+          }),
+        },
+      )
+      const result = await response.json()
+      if (!response.ok)
+        throw new Error(result.error || 'Could not add this integration.')
+      setSelectedMarketplaceProduct(null)
+      await refreshMarketplace()
+      toast({
+        title: 'Marketplace resource added',
+        description: `${product.productName} is connected to this project.`,
+      })
+    } catch (addError) {
+      toast({
+        title: 'Could not add Marketplace resource',
+        description:
+          addError instanceof Error ? addError.message : 'Please try again.',
+        variant: 'destructive',
+      })
+    } finally {
+      setMarketplaceActionId(null)
+    }
+  }
+
+  const toggleMarketplaceResource = async (
+    integration: MarketplaceIntegration,
+  ) => {
+    setMarketplaceActionId(integration.id)
+    try {
+      const response = await fetch(
+        `/api/projects/${encodeURIComponent(projectId)}/integrations`,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: integration.id,
+            action:
+              integration.status === 'connected' ? 'disconnect' : 'connect',
+          }),
+        },
+      )
+      const result = await response.json()
+      if (!response.ok)
+        throw new Error(result.error || 'Could not update this resource.')
+      await refreshMarketplace()
+      toast({
+        title:
+          integration.status === 'connected'
+            ? 'Marketplace resource disconnected'
+            : 'Marketplace resource connected',
+        description: integration.productName,
+      })
+    } catch (actionError) {
+      toast({
+        title: 'Could not update Marketplace resource',
+        description:
+          actionError instanceof Error ? actionError.message : 'Please try again.',
+        variant: 'destructive',
+      })
+    } finally {
+      setMarketplaceActionId(null)
     }
   }
 
@@ -582,6 +724,258 @@ export function ProjectDetailClient() {
       <section className="mt-8 rounded-xl border bg-card p-5">
         <div className="mb-4 flex items-start gap-3">
           <div className="rounded-lg bg-muted p-2">
+            <Database className="size-4 text-muted-foreground" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <h2 className="font-semibold">{t('Vercel Marketplace')}</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {t(
+                'Add resources from Masidy’s installed Vercel Marketplace integrations. Only verified free plans can be provisioned. Disconnecting unlinks a resource but does not delete or cancel it.',
+              )}
+            </p>
+          </div>
+        </div>
+
+        {marketplaceError ? (
+          <p role="alert" className="mb-4 text-sm text-destructive">
+            {marketplaceError instanceof Error
+              ? marketplaceError.message
+              : t('Could not load Marketplace integrations. Refresh to try again.')}
+          </p>
+        ) : marketplaceLoading || !marketplace ? (
+          <div className="mb-4 flex items-center gap-2 rounded-lg border p-3 text-sm text-muted-foreground">
+            <LoaderCircle className="size-4 animate-spin" />
+            {t('Loading Marketplace integrations…')}
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {(marketplace?.integrations.length ?? 0) > 0 && (
+              <div className="space-y-2">
+                <h3 className="text-sm font-medium">
+                  {t('Project resources')}
+                </h3>
+                {marketplace?.integrations.map((integration) => (
+                  <div
+                    key={integration.id}
+                    className="flex flex-wrap items-center gap-3 rounded-lg border p-3"
+                  >
+                    <BadgeCheck
+                      className={`size-4 shrink-0 ${
+                        integration.status === 'connected'
+                          ? 'text-emerald-600'
+                          : 'text-muted-foreground'
+                      }`}
+                    />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium">
+                        {integration.productName}
+                      </p>
+                      <p className="truncate text-xs text-muted-foreground">
+                        {integration.resourceName} ·{' '}
+                        {integration.status === 'connected'
+                          ? t('Connected')
+                          : t('Disconnected')}
+                      </p>
+                    </div>
+                    {marketplace.canManage && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => toggleMarketplaceResource(integration)}
+                        disabled={marketplaceActionId === integration.id}
+                      >
+                        {marketplaceActionId === integration.id && (
+                          <LoaderCircle className="mr-2 size-4 animate-spin" />
+                        )}
+                        {integration.status === 'connected'
+                          ? t('Disconnect')
+                          : t('Reconnect')}
+                      </Button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {marketplace.canManage ? (
+              <div className="space-y-3">
+                <h3 className="text-sm font-medium">
+                  {t('Available Marketplace products')}
+                </h3>
+                {marketplace.catalog.length === 0 ? (
+                  <p className="rounded-lg border border-dashed p-3 text-sm text-muted-foreground">
+                    {t('No Marketplace products are installed for Masidy yet.')}
+                  </p>
+                ) : (
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {marketplace.catalog.map((product) => {
+                      const canProvision =
+                        Boolean(product.freePlan) && product.metadataSupported
+                      const isSelected =
+                        selectedMarketplaceProduct?.installationId ===
+                          product.installationId &&
+                        selectedMarketplaceProduct.productId ===
+                          product.productId
+                      const alreadyConnected = marketplace.integrations.some(
+                        (integration) =>
+                          integration.provider === product.integrationSlug,
+                      )
+                      return (
+                        <article
+                          key={`${product.installationId}:${product.productId}`}
+                          className="rounded-lg border p-3"
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <p className="font-medium">{product.productName}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {product.integrationName}
+                              </p>
+                            </div>
+                            <span className="shrink-0 rounded-full bg-muted px-2 py-1 text-xs">
+                              {product.freePlan
+                                ? product.freePlan.name
+                                : t('Paid plan unavailable')}
+                            </span>
+                          </div>
+                          {product.description && (
+                            <p className="mt-2 text-sm text-muted-foreground">
+                              {product.description}
+                            </p>
+                          )}
+                          {!product.metadataSupported && (
+                            <p className="mt-2 text-xs text-muted-foreground">
+                              {t('This product requires unsupported setup fields.')}
+                            </p>
+                          )}
+                          {alreadyConnected ? (
+                            <p className="mt-3 text-xs text-muted-foreground">
+                              {t('A resource from this integration is already added.')}
+                            </p>
+                          ) : (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              className="mt-3"
+                              disabled={
+                                !canProvision ||
+                                marketplaceActionId !== null
+                              }
+                              onClick={() =>
+                                setSelectedMarketplaceProduct(
+                                  isSelected ? null : product,
+                                )
+                              }
+                            >
+                              {canProvision
+                                ? isSelected
+                                  ? t('Cancel')
+                                  : t('Add to project')
+                                : t('Unavailable')}
+                            </Button>
+                          )}
+                          {isSelected && canProvision && (
+                            <form
+                              className="mt-4 space-y-3 border-t pt-4"
+                              onSubmit={(event) =>
+                                addMarketplaceResource(event, product)
+                              }
+                            >
+                              {product.metadataFields.map((field) => (
+                                <label
+                                  key={field.name}
+                                  className="block space-y-1 text-sm"
+                                >
+                                  <span className="font-medium">
+                                    {field.title}
+                                    {field.required ? ' *' : ''}
+                                  </span>
+                                  {field.description && (
+                                    <span className="block text-xs text-muted-foreground">
+                                      {field.description}
+                                    </span>
+                                  )}
+                                  {field.type === 'boolean' ? (
+                                    <input
+                                      type="checkbox"
+                                      name={field.name}
+                                      defaultChecked={Boolean(field.default)}
+                                      className="size-4 accent-primary"
+                                    />
+                                  ) : field.enum?.length ? (
+                                    <select
+                                      name={field.name}
+                                      defaultValue={
+                                        field.default === undefined
+                                          ? ''
+                                          : String(field.default)
+                                      }
+                                      required={field.required}
+                                      className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                                    >
+                                      <option value="">
+                                        {t('Choose an option')}
+                                      </option>
+                                      {field.enum.map((value) => (
+                                        <option
+                                          key={String(value)}
+                                          value={String(value)}
+                                        >
+                                          {String(value)}
+                                        </option>
+                                      ))}
+                                    </select>
+                                  ) : (
+                                    <Input
+                                      name={field.name}
+                                      type={
+                                        field.type === 'number' ||
+                                        field.type === 'integer'
+                                          ? 'number'
+                                          : 'text'
+                                      }
+                                      step={
+                                        field.type === 'integer' ? '1' : 'any'
+                                      }
+                                      defaultValue={
+                                        field.default === undefined
+                                          ? ''
+                                          : String(field.default)
+                                      }
+                                      required={field.required}
+                                    />
+                                  )}
+                                </label>
+                              ))}
+                              <Button
+                                type="submit"
+                                disabled={marketplaceActionId !== null}
+                              >
+                                {marketplaceActionId === product.productId && (
+                                  <LoaderCircle className="mr-2 size-4 animate-spin" />
+                                )}
+                                {t('Provision free resource')}
+                              </Button>
+                            </form>
+                          )}
+                        </article>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <p className="rounded-lg border border-dashed p-3 text-sm text-muted-foreground">
+                {t('Only the project owner can manage integrations.')}
+              </p>
+            )}
+          </div>
+        )}
+      </section>
+
+      <section className="mt-8 rounded-xl border bg-card p-5">
+        <div className="mb-4 flex items-start gap-3">
+          <div className="rounded-lg bg-muted p-2">
             <KeyRound className="size-4 text-muted-foreground" />
           </div>
           <div>
@@ -615,7 +1009,7 @@ export function ProjectDetailClient() {
                     {variable.key}
                   </code>
                   <span className="text-xs text-muted-foreground">
-                    Value hidden
+                    {t('Value hidden')}
                   </span>
                   <Button
                     variant="ghost"
@@ -981,7 +1375,7 @@ export function ProjectDetailClient() {
                       ) : (
                         <ExternalLink className="mr-2 size-3.5" />
                       )}
-                      Deploy
+                      Deploy to Vercel
                     </Button>
                   )}
                 <Button

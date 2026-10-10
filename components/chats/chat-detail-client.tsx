@@ -61,6 +61,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { zipSync, strToU8 } from 'fflate'
 import { isBrandedProjectDomain } from '@/lib/branded-domain'
+import { waitForChatBuild } from '@/lib/wait-for-chat-build'
 
 type ChatPrivacy = 'public' | 'private' | 'team' | 'team-edit' | 'unlisted'
 
@@ -74,6 +75,7 @@ interface VersionSummary {
   status: 'pending' | 'completed' | 'failed'
   demoUrl?: string
   createdAt: string
+  updatedAt?: string
 }
 
 interface VersionEntry {
@@ -100,6 +102,7 @@ export function ChatDetailClient() {
   const [currentVersion, setCurrentVersion] = useState(1)
   const [selectedDemo, setSelectedDemo] = useState<string>()
   const [isGenerating, setIsGenerating] = useState(false)
+  const generationStoppedRef = useRef(false)
   const [showRateLimit, setShowRateLimit] = useState(false)
   const [isInviteOpen, setIsInviteOpen] = useState(false)
   const [isProjectSettingsOpen, setIsProjectSettingsOpen] = useState(false)
@@ -139,6 +142,9 @@ export function ChatDetailClient() {
     chatHistory,
     isLoadingChat,
     handleSendMessage,
+    stopActiveGeneration,
+    clearGenerationController,
+    getGenerationSignal,
     handleStreamingComplete: baseHandleStreamingComplete,
     handleChatData,
   } = useChat(chatId)
@@ -173,6 +179,11 @@ export function ChatDetailClient() {
   )
   const latestFilesRef = useRef(changedFiles)
   const reportedVersionsErrorRef = useRef<unknown>(null)
+  const generationStartRef = useRef<{
+    startedAt: number
+    previousVersionId?: string
+    previousVersionUpdatedAt?: string
+  } | null>(null)
   latestFilesRef.current = changedFiles
 
   useEffect(() => {
@@ -268,12 +279,96 @@ export function ChatDetailClient() {
     if (files.length > 0) setChangedFiles(files)
   }
 
-  // Wrap streamingComplete to extract files and stop generating
-  const handleStreamingComplete = (finalContent: any) => {
+  // Keep generation active while v0 turns the finished response into a preview.
+  const handleStreamingComplete = async (finalContent: any) => {
+    if (generationStoppedRef.current) return
     handleStreamingUpdate(finalContent)
-    setIsGenerating(false)
-    baseHandleStreamingComplete(finalContent)
-    void refreshVersions()
+    setIsLoading(true)
+    try {
+      await baseHandleStreamingComplete(finalContent, true)
+      const generationStart = generationStartRef.current
+      const chatDetails = await waitForChatBuild(
+        chatId,
+        generationStart?.startedAt ?? Date.now(),
+        generationStart?.previousVersionId,
+        generationStart?.previousVersionUpdatedAt,
+        getGenerationSignal(),
+      )
+      const previewUrl =
+        chatDetails.latestVersion?.demoUrl || chatDetails.demo
+      await mutate(
+        `/api/chats/${encodeURIComponent(chatId)}`,
+        { ...chatDetails, demo: previewUrl || chatDetails.demo },
+        false,
+      )
+      await refreshVersions()
+
+      if (!previewUrl) {
+        setActivePanel('code')
+        toast({
+          title: t('Project build completed'),
+          description: t(
+            'The project files are ready, but v0 did not provide a preview URL.',
+          ),
+        })
+      }
+    } catch (error) {
+      if (generationStoppedRef.current) return
+      console.error('Error waiting for project build:', error)
+      void refreshCurrentChat()
+      toast({
+        title: t('Project build did not finish'),
+        description:
+          error instanceof Error ? error.message : t('Please try again.'),
+        variant: 'destructive',
+      })
+    } finally {
+      clearGenerationController()
+      generationStartRef.current = null
+      setIsLoading(false)
+      setIsGenerating(false)
+    }
+  }
+
+  const handleStreamingError = async (streamError: string) => {
+    if (generationStoppedRef.current) return
+    setIsLoading(true)
+    try {
+      const generationStart = generationStartRef.current
+      const chatDetails = await waitForChatBuild(
+        chatId,
+        generationStart?.startedAt ?? Date.now(),
+        generationStart?.previousVersionId,
+        generationStart?.previousVersionUpdatedAt,
+        getGenerationSignal(),
+      )
+      const previewUrl =
+        chatDetails.latestVersion?.demoUrl || chatDetails.demo
+      await mutate(
+        `/api/chats/${encodeURIComponent(chatId)}`,
+        { ...chatDetails, demo: previewUrl || chatDetails.demo },
+        false,
+      )
+      await refreshVersions()
+      if (!previewUrl) setActivePanel('code')
+    } catch (error) {
+      if (generationStoppedRef.current) return
+      console.error('Streaming failed before the project build completed:', {
+        streamError,
+        error,
+      })
+      toast({
+        title: t('Project build did not finish'),
+        description:
+          error instanceof Error ? error.message : t('Please try again.'),
+        variant: 'destructive',
+      })
+    } finally {
+      clearGenerationController()
+      generationStartRef.current = null
+      setIsLoading(false)
+      setIsGenerating(false)
+    }
   }
 
   const handleVersionSelect = async (
@@ -404,14 +499,87 @@ export function ChatDetailClient() {
     }
   }
 
+  const handleDeployToVercel = async () => {
+    if (
+      !currentChat?.projectId ||
+      !currentChat.latestVersion?.id ||
+      currentChat.latestVersion.status !== 'completed'
+    ) {
+      toast({
+        title: 'This chat is not ready to deploy',
+        description: 'Assign it to a project and wait for a completed version.',
+        variant: 'destructive',
+      })
+      return
+    }
+
+    setIsPublishing(true)
+    try {
+      const response = await fetch(
+        `/api/projects/${encodeURIComponent(currentChat.projectId)}/vercel-deployments`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chatId,
+            versionId: currentChat.latestVersion.id,
+          }),
+        },
+      )
+      const result: unknown = await response.json().catch(() => null)
+      if (!response.ok) {
+        const message =
+          result &&
+          typeof result === 'object' &&
+          'error' in result &&
+          typeof result.error === 'string'
+            ? result.error
+            : 'Could not deploy this project to Vercel.'
+        throw new Error(message)
+      }
+      if (
+        !result ||
+        typeof result !== 'object' ||
+        !('webUrl' in result) ||
+        typeof result.webUrl !== 'string'
+      ) {
+        throw new Error('Vercel did not return a deployment URL.')
+      }
+      toast({
+        title: 'Vercel deployment started',
+        description: `Your production deployment is available at ${result.webUrl}`,
+      })
+      window.open(result.webUrl, '_blank', 'noopener,noreferrer')
+      void mutate(
+        `/api/projects/${encodeURIComponent(currentChat.projectId)}/deployments`,
+      )
+    } catch (error) {
+      console.error('Could not deploy project to Vercel:', error)
+      toast({
+        title: 'Could not deploy to Vercel',
+        description: error instanceof Error ? error.message : 'Please try again.',
+        variant: 'destructive',
+      })
+    } finally {
+      setIsPublishing(false)
+    }
+  }
+
   // Wrapper function to handle attachments
   const handleSubmitWithAttachments = (
     e: React.FormEvent<HTMLFormElement>,
     attachmentUrls?: Array<{ url: string }>,
   ) => {
     clearPromptFromStorage()
+    generationStoppedRef.current = false
     setAttachments([])
     setSelectedDemo(undefined)
+    generationStartRef.current = {
+      startedAt: Date.now(),
+      previousVersionId: currentChat?.latestVersion?.id,
+      previousVersionUpdatedAt: currentChat?.latestVersion?.updatedAt,
+    }
+
     setIsGenerating(true)
     const result = handleSendMessage(e, attachmentUrls)
     // Catch errors and reset isGenerating; show rate-limit overlay when applicable
@@ -427,6 +595,15 @@ export function ChatDetailClient() {
       })
     }
     return result
+  }
+
+  const stopCurrentGeneration = () => {
+    generationStoppedRef.current = true
+    generationStartRef.current = null
+    stopActiveGeneration(
+      t('Generation stopped. Send a follow-up message to continue.'),
+    )
+    setIsGenerating(false)
   }
 
   // Share handler
@@ -1276,9 +1453,9 @@ export function ChatDetailClient() {
       <div className="flex h-[calc(100dvh-52px)] flex-col overflow-hidden">
         <ResizableLayout
           className="min-h-0 flex-1"
-          defaultLeftWidth={25}
-          minLeftWidth={20}
-          maxLeftWidth={40}
+          defaultLeftWidth={36}
+          minLeftWidth={25}
+          maxLeftWidth={55}
           activePanel={activePanel === 'chat' ? 'left' : 'right'}
           leftPanel={
             <div className="flex h-full min-h-0 min-w-0 flex-col">
@@ -1317,7 +1494,9 @@ export function ChatDetailClient() {
                   onChatData={handleChatData}
                   onStreamingStarted={() => setIsLoading(false)}
                   isStreaming={isGenerating}
-                  onError={() => setIsGenerating(false)}
+                  isBuildPending={isLoading && isGenerating}
+                  isGenerationStopped={() => generationStoppedRef.current}
+                  onError={(error) => void handleStreamingError(error)}
                   onFollowUpClick={(s) => {
                     setMessage(s)
                     setTimeout(() => {
@@ -1332,6 +1511,7 @@ export function ChatDetailClient() {
                 message={message}
                 setMessage={setMessage}
                 onSubmit={handleSubmitWithAttachments}
+                onStopGeneration={stopCurrentGeneration}
                 isLoading={isLoading || isLoadingChat || !!chatLoadError}
                 isGenerating={isGenerating}
                 showSuggestions={false}
@@ -1359,6 +1539,7 @@ export function ChatDetailClient() {
               onVersionSelect={handleVersionSelect}
               onShareClick={handleShare}
               onDeployClick={handlePublish}
+              onDeployToVercelClick={handleDeployToVercel}
               onCodeClick={() => setActivePanel('code')}
               forceTab={
                 activePanel === 'code'

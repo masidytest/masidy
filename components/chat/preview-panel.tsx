@@ -79,6 +79,7 @@ interface PreviewPanelProps {
   ) => void | Promise<void>
   onShareClick?: () => void
   onDeployClick?: () => void | Promise<void>
+  onDeployToVercelClick?: () => void | Promise<void>
   onCodeClick?: () => void
   externalUrl?: string
   forceTab?: 'preview' | 'code'
@@ -96,6 +97,7 @@ export function PreviewPanel({
   onVersionSelect,
   onShareClick,
   onDeployClick,
+  onDeployToVercelClick,
   onCodeClick,
   externalUrl,
   forceTab,
@@ -309,6 +311,20 @@ export function PreviewPanel({
                 >
                   <ExternalLink className="mr-2 size-4" />
                   {t('Publish project')}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => void onDeployToVercelClick?.()}
+                  disabled={!onDeployToVercelClick}
+                  title={
+                    !currentChat?.projectId
+                      ? t('Assign this chat to a project before deploying.')
+                      : currentChat.latestVersion?.status !== 'completed'
+                        ? t('A completed project version is required to deploy.')
+                        : undefined
+                  }
+                >
+                  <ExternalLink className="mr-2 size-4" />
+                  {t('Deploy to Vercel')}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

@@ -51,6 +51,37 @@ export const project_ownerships = sqliteTable(
 
 export type ProjectOwnership = InferSelectModel<typeof project_ownerships>
 
+export const project_integrations = sqliteTable(
+  'marketplace_project_integrations',
+  {
+    id: text('id').primaryKey().notNull(),
+    v0_project_id: text('v0_project_id', { length: 255 }).notNull(),
+    vercel_project_id: text('vercel_project_id', { length: 255 }).notNull(),
+    provider: text('provider', { length: 128 }).notNull(),
+    installation_id: text('installation_id', { length: 255 }).notNull(),
+    integration_id: text('integration_id', { length: 255 }).notNull(),
+    product_id: text('product_id', { length: 255 }).notNull(),
+    product_slug: text('product_slug', { length: 128 }).notNull(),
+    product_name: text('product_name', { length: 255 }).notNull(),
+    resource_name: text('resource_name', { length: 255 }).notNull(),
+    status: text('status', { length: 32 }).notNull().default('connected'),
+    connected_by_user_id: text('connected_by_user_id')
+      .notNull()
+      .references(() => users.id),
+    created_at: text('created_at')
+      .notNull()
+      .default(sql`(datetime('now'))`),
+  },
+  (table) => ({
+    unique_project_provider: unique().on(
+      table.v0_project_id,
+      table.provider,
+    ),
+  }),
+)
+
+export type ProjectIntegration = InferSelectModel<typeof project_integrations>
+
 export const anonymous_chat_logs = sqliteTable('anonymous_chat_logs', {
   id: text('id').primaryKey().notNull(),
   ip_address: text('ip_address', { length: 45 }).notNull(),

@@ -6,10 +6,12 @@ import {
   users,
   chat_ownerships,
   project_ownerships,
+  project_integrations,
   anonymous_chat_logs,
   type User,
   type ChatOwnership,
   type ProjectOwnership,
+  type ProjectIntegration,
   type AnonymousChatLog,
 } from './schema'
 import { generateUUID } from '../utils'
@@ -199,6 +201,134 @@ export async function deleteProjectOwnership({
       .where(eq(project_ownerships.v0_project_id, v0ProjectId))
   } catch (error) {
     console.error('Failed to delete project ownership from database')
+    throw error
+  }
+}
+
+export async function getProjectIntegrations({
+  v0ProjectId,
+}: {
+  v0ProjectId: string
+}): Promise<ProjectIntegration[]> {
+  try {
+    return await db
+      .select()
+      .from(project_integrations)
+      .where(eq(project_integrations.v0_project_id, v0ProjectId))
+      .orderBy(desc(project_integrations.created_at))
+  } catch (error) {
+    console.error('Failed to get project integrations')
+    throw error
+  }
+}
+
+export async function createProjectIntegration({
+  v0ProjectId,
+  vercelProjectId,
+  provider,
+  installationId,
+  integrationId,
+  productId,
+  productSlug,
+  productName,
+  resourceName,
+  userId,
+}: {
+  v0ProjectId: string
+  vercelProjectId: string
+  provider: string
+  installationId: string
+  integrationId: string
+  productId: string
+  productSlug: string
+  productName: string
+  resourceName: string
+  userId: string
+}): Promise<ProjectIntegration[]> {
+  try {
+    return await db
+      .insert(project_integrations)
+      .values({
+        id: generateUUID(),
+        v0_project_id: v0ProjectId,
+        vercel_project_id: vercelProjectId,
+        provider,
+        installation_id: installationId,
+        integration_id: integrationId,
+        product_id: productId,
+        product_slug: productSlug,
+        product_name: productName,
+        resource_name: resourceName,
+        status: 'connected',
+        connected_by_user_id: userId,
+      })
+      .returning()
+  } catch (error) {
+    console.error('Failed to save project integration')
+    throw error
+  }
+}
+
+export async function getProjectIntegrationById({
+  v0ProjectId,
+  integrationId,
+}: {
+  v0ProjectId: string
+  integrationId: string
+}): Promise<ProjectIntegration | undefined> {
+  try {
+    const [integration] = await db
+      .select()
+      .from(project_integrations)
+      .where(
+        and(
+          eq(project_integrations.v0_project_id, v0ProjectId),
+          eq(project_integrations.id, integrationId),
+        ),
+      )
+    return integration
+  } catch (error) {
+    console.error('Failed to get project integration by ID')
+    throw error
+  }
+}
+
+export async function updateProjectIntegrationStatus({
+  v0ProjectId,
+  integrationId,
+  status,
+}: {
+  v0ProjectId: string
+  integrationId: string
+  status: 'connected' | 'disconnected'
+}) {
+  try {
+    return await db
+      .update(project_integrations)
+      .set({ status })
+      .where(
+        and(
+          eq(project_integrations.v0_project_id, v0ProjectId),
+          eq(project_integrations.id, integrationId),
+        ),
+      )
+  } catch (error) {
+    console.error('Failed to update project integration status')
+    throw error
+  }
+}
+
+export async function deleteProjectIntegrations({
+  v0ProjectId,
+}: {
+  v0ProjectId: string
+}) {
+  try {
+    return await db
+      .delete(project_integrations)
+      .where(eq(project_integrations.v0_project_id, v0ProjectId))
+  } catch (error) {
+    console.error('Failed to delete project integrations')
     throw error
   }
 }

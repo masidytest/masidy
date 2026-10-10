@@ -584,7 +584,7 @@ export function WorkspaceShell({ children }: WorkspaceShellProps) {
             <Button
               variant="outline"
               size="icon"
-              className="fixed left-2 top-3 z-40 size-6 rounded-full bg-background"
+              className="fixed start-2 top-3 z-40 size-6 rounded-full bg-background"
               onClick={toggleCollapsed}
               aria-label={t('Expand sidebar')}
               title={t('Expand sidebar')}
@@ -600,7 +600,7 @@ export function WorkspaceShell({ children }: WorkspaceShellProps) {
       <Button
         variant="outline"
         size="icon"
-        className="fixed left-3 top-3 z-40 size-9 bg-background shadow lg:hidden"
+        className="fixed start-3 top-3 z-40 size-9 bg-background shadow lg:hidden"
         onClick={() => setMobileOpen(true)}
         aria-label={t('Open workspace navigation')}
         aria-expanded={mobileOpen}
@@ -622,7 +622,7 @@ export function WorkspaceShell({ children }: WorkspaceShellProps) {
             role="dialog"
             aria-modal="true"
             aria-label={t('Workspace navigation')}
-            className="absolute inset-y-0 left-0 shadow-xl"
+            className="absolute inset-y-0 start-0 shadow-xl"
           >
             {sidebar}
             <Button

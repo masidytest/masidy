@@ -15,10 +15,13 @@ import { useLocale } from '@/components/providers/locale-provider'
 
 // Error boundary to catch render crashes without killing the whole tree
 class StreamErrorBoundary extends Component<
-  { children: React.ReactNode; onError?: () => void },
+  { children: React.ReactNode; onError?: (error: string) => void },
   { error: string | null }
 > {
-  constructor(props: { children: React.ReactNode; onError?: () => void }) {
+  constructor(props: {
+    children: React.ReactNode
+    onError?: (error: string) => void
+  }) {
     super(props)
     this.state = { error: null }
   }
@@ -27,7 +30,7 @@ class StreamErrorBoundary extends Component<
   }
   componentDidCatch(error: Error, info: React.ErrorInfo) {
     console.error('[StreamErrorBoundary] caught:', error, info)
-    this.props.onError?.()
+    this.props.onError?.(error.message)
   }
   render() {
     if (this.state.error) {
@@ -68,8 +71,10 @@ interface ChatMessagesProps {
   onChatData: (chatData: any) => void
   onStreamingStarted?: () => void
   onRetry?: () => void
-  onError?: () => void
+  onError?: (error: string) => void
+  isGenerationStopped?: () => boolean
   isStreaming?: boolean
+  isBuildPending?: boolean
   onFollowUpClick?: (suggestion: string) => void
 }
 
@@ -83,7 +88,9 @@ export function ChatMessages({
   onStreamingStarted,
   onRetry,
   onError,
+  isGenerationStopped,
   isStreaming,
+  isBuildPending = false,
   onFollowUpClick,
 }: ChatMessagesProps) {
   const { t } = useLocale()
@@ -176,9 +183,11 @@ export function ChatMessages({
                           onStreamingStarted()
                         }
                       }}
-                      onError={(error) =>
+                      onError={(error) => {
+                        if (isGenerationStopped?.()) return
                         console.error('Streaming error:', error)
-                      }
+                        onError?.(error)
+                      }}
                       components={sharedComponents}
                       showLoadingIndicator={false}
                     />
@@ -194,8 +203,12 @@ export function ChatMessages({
             )
           })}
           {isLoading && (
-            <div className="flex justify-center py-4">
+            <div
+              className="flex items-center justify-center gap-2 py-4 text-sm text-muted-foreground"
+              role={isBuildPending ? 'status' : undefined}
+            >
               <Loader size={16} className="text-gray-500 dark:text-gray-400" />
+              {isBuildPending && <span>{t('Building your project preview...')}</span>}
             </div>
           )}
         </ConversationContent>

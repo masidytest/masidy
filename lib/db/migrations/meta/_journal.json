@@ -15,6 +15,20 @@
       "when": 1791363002098,
       "tag": "0001_uneven_tinkerer",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1791531019937,
+      "tag": "0002_project_integrations",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1791582535347,
+      "tag": "0003_vercel_marketplace_integrations",
+      "breakpoints": true
     }
   ]
 }

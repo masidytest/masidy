@@ -138,13 +138,15 @@ export async function DELETE(request: NextRequest, { params }: RouteContext) {
       projectId,
       decrypted: false,
     })
-    if (!variables.data.some((variable) => variable.id === body.id)) {
+    const targetVariable = variables.data.find(
+      (variable) => variable.id === body.id,
+    )
+    if (!targetVariable) {
       return NextResponse.json(
         { error: 'Environment variable not found.' },
         { status: 404 },
       )
     }
-
     await v0.projects.deleteEnvVars({
       projectId,
       environmentVariableIds: [body.id],

@@ -156,6 +156,29 @@ const arabicTranslations: Record<string, string> = {
   'Describe what you want to build...': 'صِف ما تريد إنشاءه...',
   'E-commerce': 'التجارة الإلكترونية',
   'Environment variables': 'متغيرات البيئة',
+  'Vercel Marketplace': 'سوق Vercel',
+  'Add resources from Masidy’s installed Vercel Marketplace integrations. Only verified free plans can be provisioned. Disconnecting unlinks a resource but does not delete or cancel it.':
+    'أضف موارد من عمليات تكامل سوق Vercel المثبّتة لدى Masidy. لا يمكن توفير سوى الخطط المجانية المؤكدة. يؤدي قطع الاتصال إلى إلغاء الربط فقط، ولا يحذف المورد أو يلغي الاشتراك فيه.',
+  'Could not load Marketplace integrations. Refresh to try again.':
+    'تعذّر تحميل عمليات التكامل من السوق. حدّث الصفحة وحاول مجددًا.',
+  'Loading Marketplace integrations…': 'جارٍ تحميل عمليات التكامل من السوق…',
+  'Project resources': 'موارد المشروع',
+  'Available Marketplace products': 'منتجات السوق المتاحة',
+  'No Marketplace products are installed for Masidy yet.':
+    'لم يتم تثبيت منتجات من السوق لدى Masidy بعد.',
+  'Paid plan unavailable': 'الخطة المدفوعة غير متاحة',
+  'This product requires unsupported setup fields.':
+    'يتطلب هذا المنتج حقول إعداد غير مدعومة.',
+  'A resource from this integration is already added.':
+    'تمت إضافة مورد من عملية التكامل هذه بالفعل.',
+  'Choose an option': 'اختر خيارًا',
+  'Provision free resource': 'توفير مورد مجاني',
+  Reconnect: 'إعادة الاتصال',
+  Disconnected: 'غير متصل',
+  Connected: 'متصل',
+  Disconnect: 'قطع الاتصال',
+  'Only the project owner can manage integrations.':
+    'مالك المشروع فقط يمكنه إدارة عمليات الربط.',
   FAQ: 'الأسئلة الشائعة',
   Favorites: 'المفضلة',
   Feedback: 'إرسال ملاحظات',
@@ -204,7 +227,6 @@ const arabicTranslations: Record<string, string> = {
   'Your feedback': 'ملاحظاتك',
   Submit: 'إرسال',
   Usage: 'الاستخدام',
-  Unavailable: 'غير متاح',
   'Loading…': 'جارٍ التحميل…',
   'Mobile menu': 'قائمة الهاتف',
   'Use in new chat': 'استخدم في محادثة جديدة',
@@ -411,6 +433,7 @@ const arabicTranslations: Record<string, string> = {
   'Chat and project actions': 'إجراءات المحادثة والمشروع',
   'Publishing project': 'جارٍ نشر المشروع',
   'Publish project': 'نشر المشروع',
+  'Deploy to Vercel': 'النشر على Vercel',
   'Publishing…': 'جارٍ النشر…',
   Publish: 'نشر',
   'Rename chat': 'إعادة تسمية المحادثة',
@@ -618,6 +641,26 @@ const arabicTranslations: Record<string, string> = {
   'No issues found': 'لم يتم العثور على مشكلات',
   'Starting tasks...': 'جارٍ بدء المهام...',
   'Analyzing requirements...': 'جارٍ تحليل المتطلبات...',
+  'Building your project preview...': 'جارٍ تجهيز معاينة مشروعك...',
+  'Stop generation': 'إيقاف التوليد',
+  'Send message': 'إرسال الرسالة',
+  'Generation stopped. Send a follow-up message to continue.':
+    'تم إيقاف التوليد. أرسل رسالة متابعة للمتابعة.',
+  'Project build completed': 'اكتمل بناء المشروع',
+  'The project files are ready, but v0 did not provide a preview URL.':
+    'ملفات المشروع جاهزة، لكن v0 لم يوفّر رابطًا للمعاينة.',
+  'Project build did not finish': 'لم يكتمل بناء المشروع',
+  'The project is still building. Refresh this chat shortly to check for its preview.':
+    'لا يزال المشروع قيد البناء. حدّث المحادثة بعد قليل للتحقق من المعاينة.',
+  'The project build failed. Review the chat and try again.':
+    'فشل بناء المشروع. راجع المحادثة وحاول مرة أخرى.',
+  'Could not check the project build status.':
+    'تعذّر التحقق من حالة بناء المشروع.',
+  'Could not open this chat': 'تعذّر فتح هذه المحادثة',
+  'The chat was created but its ID was not received.':
+    'تم إنشاء المحادثة، لكن لم يتم استلام معرّفها.',
+  'Could not save chat access permissions.':
+    'تعذّر حفظ صلاحيات الوصول إلى المحادثة.',
 }
 
 interface LocaleContextValue {

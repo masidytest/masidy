@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useStreaming } from '@/contexts/streaming-context'
 import useSWR, { mutate } from 'swr'
@@ -14,6 +14,8 @@ interface Chat {
   latestVersion?: {
     id: string
     status: 'pending' | 'completed' | 'failed'
+    createdAt: string
+    updatedAt?: string
     demoUrl?: string
     files: Array<{
       name: string
@@ -71,11 +73,19 @@ async function fetchChat(url: string): Promise<Chat> {
 
 export function useChat(chatId: string) {
   const router = useRouter()
-  const { handoff, clearHandoff } = useStreaming()
+  const {
+    handoff,
+    clearHandoff,
+    setGenerationController,
+    clearGenerationController,
+    stopGeneration: stopSharedGeneration,
+    getGenerationSignal,
+  } = useStreaming()
   const [message, setMessage] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [isStreaming, setIsStreaming] = useState(false)
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([])
+  const generationControllerRef = useRef<AbortController | null>(null)
 
   // Use SWR to fetch chat data
   const {
@@ -153,6 +163,9 @@ export function useChat(chatId: string) {
     if (!message.trim() || isLoading || !chatId) return
 
     const userMessage = message.trim()
+    const controller = new AbortController()
+    generationControllerRef.current = controller
+    setGenerationController(controller)
     setMessage('')
     setIsLoading(true)
 
@@ -165,6 +178,7 @@ export function useChat(chatId: string) {
         headers: {
           'Content-Type': 'application/json',
         },
+        signal: controller.signal,
         body: JSON.stringify({
           message: userMessage,
           chatId: chatId,
@@ -216,6 +230,11 @@ export function useChat(chatId: string) {
         },
       ])
     } catch (error) {
+      if (controller.signal.aborted) {
+        setIsLoading(false)
+        setIsStreaming(false)
+        return
+      }
       console.error('Error:', error)
 
       // Re-throw rate limit errors so callers can show the dedicated overlay
@@ -241,12 +260,46 @@ export function useChat(chatId: string) {
         },
       ])
       setIsLoading(false)
+    } finally {
+      if (generationControllerRef.current === controller) {
+        generationControllerRef.current = null
+      }
     }
   }
 
-  const handleStreamingComplete = async (finalContent: any) => {
-    setIsStreaming(false)
+  const stopActiveGeneration = (message: string) => {
+    const controller = generationControllerRef.current
+    if (controller && !controller.signal.aborted) controller.abort()
+    generationControllerRef.current = null
+    stopSharedGeneration()
     setIsLoading(false)
+    setIsStreaming(false)
+    setChatHistory((previous) => {
+      const streamingIndex = previous.findLastIndex(
+        (entry) => entry.type === 'assistant' && entry.isStreaming,
+      )
+      if (streamingIndex < 0) {
+        return [...previous, { type: 'assistant', content: message }]
+      }
+      return previous.map((entry, index) =>
+        index === streamingIndex
+          ? {
+              ...entry,
+              content: message,
+              isStreaming: false,
+              stream: undefined,
+            }
+          : entry,
+      )
+    })
+  }
+
+  const handleStreamingComplete = async (
+    finalContent: any,
+    keepLoading = false,
+  ) => {
+    setIsStreaming(false)
+    if (!keepLoading) setIsLoading(false)
 
     console.log(
       'Stream completed with final content:',
@@ -418,6 +471,9 @@ export function useChat(chatId: string) {
     chatHistory,
     isLoadingChat,
     handleSendMessage,
+    stopActiveGeneration,
+    clearGenerationController,
+    getGenerationSignal,
     handleStreamingComplete,
     handleChatData,
   }

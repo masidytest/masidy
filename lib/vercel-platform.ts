@@ -21,7 +21,7 @@ export class VercelPlatformError extends Error {
   }
 }
 
-function getPlatformConfig() {
+export function getVercelPlatformConfig() {
   const token = process.env.VERCEL_TOKEN_KEY
   const teamId = process.env.VERCEL_TEAM_ID
   if (!token || !teamId) {
@@ -33,11 +33,11 @@ function getPlatformConfig() {
   return { token, teamId }
 }
 
-async function vercelRequest<T>(
+export async function vercelRequest<T>(
   path: string,
   init: RequestInit = {},
 ): Promise<T> {
-  const { token, teamId } = getPlatformConfig()
+  const { token, teamId } = getVercelPlatformConfig()
   const url = new URL(path, 'https://api.vercel.com')
   url.searchParams.set('teamId', teamId)
 

@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useState, ReactNode } from 'react'
+import { createContext, useContext, useRef, useState, ReactNode } from 'react'
 
 interface StreamingHandoff {
   chatId: string | null
@@ -16,6 +16,10 @@ interface StreamingContextType {
     userMessage: string,
   ) => void
   clearHandoff: () => void
+  setGenerationController: (controller: AbortController) => void
+  clearGenerationController: () => void
+  stopGeneration: () => boolean
+  getGenerationSignal: () => AbortSignal | undefined
 }
 
 const StreamingContext = createContext<StreamingContextType | null>(null)
@@ -33,6 +37,7 @@ interface StreamingProviderProps {
 }
 
 export function StreamingProvider({ children }: StreamingProviderProps) {
+  const generationControllerRef = useRef<AbortController | null>(null)
   const [handoff, setHandoff] = useState<StreamingHandoff>({
     chatId: null,
     stream: null,
@@ -51,12 +56,34 @@ export function StreamingProvider({ children }: StreamingProviderProps) {
     setHandoff({ chatId: null, stream: null, userMessage: null })
   }
 
+  const setGenerationController = (controller: AbortController) => {
+    generationControllerRef.current = controller
+  }
+
+  const clearGenerationController = () => {
+    generationControllerRef.current = null
+  }
+
+  const stopGeneration = () => {
+    const controller = generationControllerRef.current
+    generationControllerRef.current = null
+    if (!controller || controller.signal.aborted) return false
+    controller.abort()
+    return true
+  }
+
+  const getGenerationSignal = () => generationControllerRef.current?.signal
+
   return (
     <StreamingContext.Provider
       value={{
         handoff,
         startHandoff,
         clearHandoff,
+        setGenerationController,
+        clearGenerationController,
+        stopGeneration,
+        getGenerationSignal,
       }}
     >
       {children}

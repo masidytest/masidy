@@ -1,7 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/app/(auth)/auth'
-import { deleteProjectOwnership, getChatIdsByUserId } from '@/lib/db/queries'
+import {
+  deleteProjectIntegrations,
+  deleteProjectOwnership,
+  getChatIdsByUserId,
+  getProjectIntegrations,
+  getProjectOwnership,
+  updateProjectIntegrationStatus,
+} from '@/lib/db/queries'
 import { getAccessibleProjectIds } from '@/lib/project-access'
+import { setMarketplaceResourceConnection } from '@/lib/vercel-marketplace'
 import { v0 } from '@/lib/v0-key-pool'
 
 type RouteContext = { params: Promise<{ projectId: string }> }
@@ -138,9 +146,38 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
     const access = await getAuthorizedProject(context)
     if ('response' in access) return access.response
 
+    const ownership = await getProjectOwnership({
+      v0ProjectId: access.projectId,
+    })
+    if (ownership?.user_id !== access.session.user.id) {
+      return NextResponse.json(
+        { error: 'Only the project owner can delete this project.' },
+        { status: 403 },
+      )
+    }
+
+    const integrations = await getProjectIntegrations({
+      v0ProjectId: access.projectId,
+    })
+    for (const integration of integrations) {
+      if (integration.status !== 'connected') continue
+      await setMarketplaceResourceConnection({
+        projectId: integration.vercel_project_id,
+        resourceName: integration.resource_name,
+        connected: false,
+      })
+      await updateProjectIntegrationStatus({
+        v0ProjectId: access.projectId,
+        integrationId: integration.id,
+        status: 'disconnected',
+      })
+    }
     await v0.projects.delete({
       projectId: access.projectId,
       deleteAllChats: false,
+    })
+    await deleteProjectIntegrations({
+      v0ProjectId: access.projectId,
     })
     await deleteProjectOwnership({ v0ProjectId: access.projectId })
     return NextResponse.json({ id: access.projectId, deleted: true })

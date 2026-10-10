@@ -41,9 +41,23 @@ interface ProjectsResponse {
 }
 
 const fetcher = async (url: string): Promise<ProjectsResponse> => {
-  const response = await fetch(url)
-  if (!response.ok) throw new Error('Failed to load projects.')
-  return response.json()
+  try {
+    const response = await fetch(url, {
+      signal: AbortSignal.timeout(20_000),
+    })
+    const result = await response.json()
+    if (!response.ok) {
+      throw new Error(
+        result.details || result.error || 'Failed to load projects.',
+      )
+    }
+    return result
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'TimeoutError') {
+      throw new Error('Loading projects timed out. Please retry.')
+    }
+    throw error
+  }
 }
 
 export function ProjectsClient() {
@@ -51,6 +65,7 @@ export function ProjectsClient() {
   const { data, error, isLoading, mutate } = useSWR<ProjectsResponse>(
     '/api/projects',
     fetcher,
+    { shouldRetryOnError: false },
   )
   const { toast } = useToast()
   const [search, setSearch] = useState('')
@@ -128,7 +143,9 @@ export function ProjectsClient() {
       })
       const result = await response.json()
       if (!response.ok)
-        throw new Error(result.error || 'Failed to create project.')
+        throw new Error(
+          result.details || result.error || 'Failed to create project.',
+        )
       await mutate()
       setCreateOpen(false)
       setName('')
@@ -235,12 +252,6 @@ export function ProjectsClient() {
           </span>
         </div>
 
-        {isLoading && (
-          <div className="flex items-center justify-center gap-2 py-16 text-sm text-muted-foreground">
-            <LoaderCircle className="size-4 animate-spin" />
-            {t('Loading projects…')}
-          </div>
-        )}
         {error && (
           <div
             role="alert"
@@ -255,6 +266,12 @@ export function ProjectsClient() {
             >
               {t('Retry')}
             </Button>
+          </div>
+        )}
+        {!error && isLoading && (
+          <div className="flex items-center justify-center gap-2 py-16 text-sm text-muted-foreground">
+            <LoaderCircle className="size-4 animate-spin" />
+            {t('Loading projects…')}
           </div>
         )}
         {!isLoading && !error && filteredProjects.length === 0 && (

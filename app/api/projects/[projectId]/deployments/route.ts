@@ -7,6 +7,7 @@ import {
   addProjectDomain,
   getProjectDomains,
   VercelPlatformError,
+  vercelRequest,
 } from '@/lib/vercel-platform'
 import {
   getBrandedProjectDomainCandidates,
@@ -69,7 +70,80 @@ export async function GET(
       }),
     )
 
-    return NextResponse.json({ data: deployments.flat() })
+    const vercelDeployments = project.vercelProjectId
+      ? await vercelRequest<unknown>(
+          `/v6/deployments?projectId=${encodeURIComponent(project.vercelProjectId)}&limit=100&target=production`,
+        )
+      : null
+    const chatNames = new Map(
+      ownedChats.map((chat) => [
+        chat.id,
+        chat.name || chat.title || `Chat ${chat.id.slice(0, 8)}`,
+      ]),
+    )
+    const directDeployments =
+      vercelDeployments &&
+      typeof vercelDeployments === 'object' &&
+      'deployments' in vercelDeployments &&
+      Array.isArray(vercelDeployments.deployments)
+        ? vercelDeployments.deployments.flatMap((deployment) => {
+            if (!deployment || typeof deployment !== 'object') return []
+            const meta =
+              'meta' in deployment &&
+              deployment.meta &&
+              typeof deployment.meta === 'object'
+                ? deployment.meta
+                : null
+            const chatId =
+              meta &&
+              'masidy_chat_id' in meta &&
+              typeof meta.masidy_chat_id === 'string'
+                ? meta.masidy_chat_id
+                : undefined
+            const versionId =
+              meta &&
+              'masidy_version_id' in meta &&
+              typeof meta.masidy_version_id === 'string'
+                ? meta.masidy_version_id
+                : undefined
+            const id =
+              'uid' in deployment && typeof deployment.uid === 'string'
+                ? deployment.uid
+                : 'id' in deployment && typeof deployment.id === 'string'
+                  ? deployment.id
+                  : undefined
+            const rawUrl =
+              'url' in deployment && typeof deployment.url === 'string'
+                ? deployment.url
+                : undefined
+            if (
+              !chatId ||
+              !versionId ||
+              !id ||
+              !rawUrl ||
+              !chatNames.has(chatId)
+            ) {
+              return []
+            }
+            const webUrl = rawUrl.startsWith('https://')
+              ? rawUrl
+              : `https://${rawUrl}`
+            return [
+              {
+                id,
+                chatId,
+                chatName: chatNames.get(chatId)!,
+                versionId,
+                webUrl,
+                inspectorUrl: webUrl,
+              },
+            ]
+          })
+        : []
+
+    return NextResponse.json({
+      data: [...directDeployments, ...deployments.flat()],
+    })
   } catch (error) {
     console.error('Project deployments fetch error:', error)
     return NextResponse.json(

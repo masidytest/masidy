@@ -219,7 +219,9 @@ export class V0KeyPool {
 
     if (lastRateLimitError) throw lastRateLimitError
     if (this.keys.every((key) => key.disabled)) {
-      throw new Error('V0KeyPool: all configured API keys were rejected')
+      throw new Error(
+        'All configured v0 API keys were rejected. Update V0_API_KEYS or V0_API_KEY0 in .env.local with an active v0 API key, then restart the preview.',
+      )
     }
     throw new Error('V0KeyPool: no eligible API key is currently available')
   }

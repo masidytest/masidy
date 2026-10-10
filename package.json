@@ -52,6 +52,7 @@
     "tsx": "^4.19.2",
     "use-stick-to-bottom": "^1.1.1",
     "v0-sdk": "0.16.1",
+    "vercel": "63.1.2",
     "zod": "^4.1.1"
   },
   "devDependencies": {

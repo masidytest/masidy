@@ -26,6 +26,7 @@ interface ChatInputProps {
     e: React.FormEvent<HTMLFormElement>,
     attachments?: Array<{ url: string }>,
   ) => void
+  onStopGeneration?: () => void
   isLoading: boolean
   isGenerating?: boolean // true from first send until streaming fully completes
   showSuggestions: boolean
@@ -38,6 +39,7 @@ export function ChatInput({
   message,
   setMessage,
   onSubmit,
+  onStopGeneration,
   isLoading,
   isGenerating,
   showSuggestions,
@@ -168,7 +170,17 @@ export function ChatInput({
                 disabled={isGenerating}
               />
               <PromptInputSubmit
-                disabled={!message || isGenerating}
+                type={isGenerating ? 'button' : 'submit'}
+                aria-label={isGenerating ? t('Stop generation') : t('Send message')}
+                title={isGenerating ? t('Stop generation') : t('Send message')}
+                onClick={
+                  isGenerating ? () => onStopGeneration?.() : undefined
+                }
+                disabled={
+                  isGenerating
+                    ? !onStopGeneration
+                    : !message.trim() || isLoading
+                }
                 status={isGenerating ? 'streaming' : 'ready'}
               />
             </PromptInputTools>

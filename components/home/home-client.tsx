@@ -60,6 +60,7 @@ import { ResizableLayout } from '@/components/shared/resizable-layout'
 import { BottomToolbar } from '@/components/shared/bottom-toolbar'
 import { RateLimit } from '@/components/rate-limit'
 import { extractCodeFiles } from '@/lib/code-files'
+import { waitForChatBuild } from '@/lib/wait-for-chat-build'
 import {
   appTemplates,
   builtInDesignSystems,
@@ -184,6 +185,8 @@ export function HomeClient() {
   const [currentChat, setCurrentChat] = useState<{
     id: string
     demo?: string
+    latestVersionId?: string
+    latestVersionUpdatedAt?: string
   } | null>(null)
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [refreshKey, setRefreshKey] = useState(0)
@@ -217,8 +220,21 @@ export function HomeClient() {
     null,
   )
   const pendingHandoffMessageRef = useRef('')
+  const generationStartRef = useRef<{
+    startedAt: number
+    previousVersionId?: string
+    previousVersionUpdatedAt?: string
+  } | null>(null)
+  const generationAbortControllerRef = useRef<AbortController | null>(null)
+  const generationStoppedRef = useRef(false)
   const router = useRouter()
-  const { startHandoff } = useStreaming()
+  const {
+    startHandoff,
+    setGenerationController,
+    clearGenerationController,
+    stopGeneration: stopSharedGeneration,
+    getGenerationSignal,
+  } = useStreaming()
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   // Auth session for Recent Chats
@@ -460,6 +476,42 @@ export function HomeClient() {
     setIsDragOver(false)
   }
 
+  const stopCurrentGeneration = () => {
+    generationStoppedRef.current = true
+    generationAbortControllerRef.current?.abort()
+    generationAbortControllerRef.current = null
+    const pendingHandoffStream = pendingHandoffStreamRef.current
+    pendingHandoffStreamRef.current = null
+    if (pendingHandoffStream) void pendingHandoffStream.cancel()
+    pendingHandoffMessageRef.current = ''
+    stopSharedGeneration()
+    clearGenerationController()
+    generationStartRef.current = null
+    setIsLoading(false)
+    setIsGenerating(false)
+    setChatHistory((previous) => {
+      const stoppedMessage = t(
+        'Generation stopped. Send a follow-up message to continue.',
+      )
+      const streamingIndex = previous.findLastIndex(
+        (entry) => entry.type === 'assistant' && entry.isStreaming,
+      )
+      if (streamingIndex < 0) {
+        return [...previous, { type: 'assistant', content: stoppedMessage }]
+      }
+      return previous.map((entry, index) =>
+        index === streamingIndex
+          ? {
+              ...entry,
+              content: stoppedMessage,
+              isStreaming: false,
+              stream: undefined,
+            }
+          : entry,
+      )
+    })
+  }
+
   const handleSendMessage = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     if (!message.trim() || isLoading) return
@@ -495,6 +547,15 @@ export function HomeClient() {
     ])
     setIsLoading(true)
     setIsGenerating(true)
+    generationStoppedRef.current = false
+    const controller = new AbortController()
+    generationAbortControllerRef.current = controller
+    setGenerationController(controller)
+    generationStartRef.current = {
+      startedAt: Date.now(),
+      previousVersionId: currentChat?.latestVersionId,
+      previousVersionUpdatedAt: currentChat?.latestVersionUpdatedAt,
+    }
 
     try {
       const response = await fetch('/api/chat', {
@@ -502,6 +563,7 @@ export function HomeClient() {
         headers: {
           'Content-Type': 'application/json',
         },
+        signal: controller.signal,
         body: JSON.stringify({
           message: userMessage,
           streaming: true,
@@ -540,6 +602,8 @@ export function HomeClient() {
           }
         }
         if (isRateLimit) {
+          clearGenerationController()
+          generationAbortControllerRef.current = null
           setIsLoading(false)
           setIsGenerating(false)
           setShowRateLimit(true)
@@ -568,6 +632,9 @@ export function HomeClient() {
         },
       ])
     } catch (error) {
+      if (controller.signal.aborted || generationStoppedRef.current) return
+      clearGenerationController()
+      generationAbortControllerRef.current = null
       console.error('Error creating chat:', error)
       setIsLoading(false)
       setIsGenerating(false)
@@ -615,9 +682,48 @@ export function HomeClient() {
       const shouldNavigate =
         isNewChat && pendingHandoffStreamRef.current !== null
 
+      if (isNewChat) {
+        currentChatIdRef.current = chatData.id
+        try {
+          const response = await fetch('/api/chat/ownership', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              chatId: chatData.id,
+            }),
+          })
+          if (!response.ok) {
+            const result = (await response.json().catch(() => null)) as
+              | { error?: string }
+              | null
+            throw new Error(
+              result?.error || 'Could not save chat access permissions.',
+            )
+          }
+        } catch (error) {
+          console.error('Failed to save new chat ownership:', error)
+          currentChatIdRef.current = null
+          const handoffStream = pendingHandoffStreamRef.current
+          pendingHandoffStreamRef.current = null
+          if (handoffStream) await handoffStream.cancel()
+          setIsGenerating(false)
+          setIsLoading(false)
+          toast({
+            title: t('Could not open this chat'),
+            description:
+              error instanceof Error
+                ? error.message
+                : t('Please try again.'),
+            variant: 'destructive',
+          })
+          return
+        }
+      }
+
       // Only set currentChat if it's not already set or if this is the main chat object
       if (isNewChat || chatData.object === 'chat') {
-        currentChatIdRef.current = chatData.id
         setCurrentChatId(chatData.id)
         setCurrentChat({ id: chatData.id })
 
@@ -634,23 +740,6 @@ export function HomeClient() {
         }
       }
 
-      // Create ownership record only for brand-new chats
-      if (isNewChat) {
-        try {
-          await fetch('/api/chat/ownership', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              chatId: chatData.id,
-            }),
-          })
-        } catch (error) {
-          console.error('Failed to create chat ownership:', error)
-        }
-      }
-
       if (shouldNavigate) {
         router.push(`/chats/${encodeURIComponent(chatData.id)}`)
       }
@@ -658,8 +747,8 @@ export function HomeClient() {
   }
 
   const handleStreamingComplete = async (finalContent: any) => {
-    setIsLoading(false)
-    setIsGenerating(false)
+    if (generationStoppedRef.current) return
+    setIsLoading(true)
 
     // The v0 API stores ALL file code in code-project.source as a concatenated string
     // with [V0_FILE]<lang>:file="<filename>" markers between each file.
@@ -758,16 +847,26 @@ export function HomeClient() {
       if (pendingHandoffStream) {
         await pendingHandoffStream.cancel()
       }
+      generationStartRef.current = null
+      setIsLoading(false)
+      setIsGenerating(false)
+      toast({
+        title: t('Could not open this chat'),
+        description: t('The chat was created but its ID was not received.'),
+        variant: 'destructive',
+      })
       return
     }
 
     try {
-      const response = await fetch(`/api/chats/${chatId}`)
-      if (!response.ok) {
-        console.warn('Failed to fetch chat details:', response.status)
-        return
-      }
-      const chatDetails = await response.json()
+      const generationStart = generationStartRef.current
+      const chatDetails = await waitForChatBuild(
+        chatId,
+        generationStart?.startedAt ?? Date.now(),
+        generationStart?.previousVersionId,
+        generationStart?.previousVersionUpdatedAt,
+        getGenerationSignal(),
+      )
       const latestFiles = extractCodeFiles(chatDetails)
       if (latestFiles.length > 0) {
         dedupedFiles = latestFiles
@@ -777,22 +876,129 @@ export function HomeClient() {
 
       if (demoUrl) {
         setCurrentChat((prev) =>
-          prev ? { ...prev, demo: demoUrl } : { id: chatId, demo: demoUrl },
+          prev
+            ? {
+                ...prev,
+                demo: demoUrl,
+                latestVersionId: chatDetails.latestVersion?.id,
+                latestVersionUpdatedAt: chatDetails.latestVersion?.updatedAt,
+              }
+            : {
+                id: chatId,
+                demo: demoUrl,
+                latestVersionId: chatDetails.latestVersion?.id,
+                latestVersionUpdatedAt: chatDetails.latestVersion?.updatedAt,
+              },
         )
-        if (window.innerWidth < 768) {
-          setActivePanel('preview')
-        }
-        // Version tracking using ref to avoid stale closure
-        versionCountRef.current += 1
-        const nextVersion = versionCountRef.current
-        setCurrentVersion(nextVersion)
+      } else {
+        setCurrentChat((prev) =>
+          prev
+            ? {
+                ...prev,
+                latestVersionId: chatDetails.latestVersion?.id,
+                latestVersionUpdatedAt: chatDetails.latestVersion?.updatedAt,
+              }
+            : {
+                id: chatId,
+                latestVersionId: chatDetails.latestVersion?.id,
+                latestVersionUpdatedAt: chatDetails.latestVersion?.updatedAt,
+              },
+        )
+        setActivePanel('code')
+        toast({
+          title: t('Project build completed'),
+          description: t(
+            'The project files are ready, but v0 did not provide a preview URL.',
+          ),
+        })
+      }
+
+      if (window.innerWidth < 768) setActivePanel(demoUrl ? 'preview' : 'code')
+      versionCountRef.current += 1
+      const nextVersion = versionCountRef.current
+      setCurrentVersion(nextVersion)
+      if (demoUrl) {
         setVersionHistory((prev) => [
           ...prev,
           { version: nextVersion, demoUrl, changedFiles: dedupedFiles },
         ])
       }
     } catch (error) {
-      console.error('Error fetching demo URL after streaming:', error)
+      if (generationStoppedRef.current) return
+      console.error('Error waiting for project build:', error)
+      toast({
+        title: t('Project build did not finish'),
+        description:
+          error instanceof Error ? error.message : t('Please try again.'),
+        variant: 'destructive',
+      })
+    } finally {
+      clearGenerationController()
+      generationAbortControllerRef.current = null
+      generationStartRef.current = null
+      setIsLoading(false)
+      setIsGenerating(false)
+    }
+  }
+
+  const handleStreamingError = async (streamError: string) => {
+    if (generationStoppedRef.current) return
+    const chatId = currentChatIdRef.current
+    if (!chatId) {
+      console.error(
+        'Streaming failed before a chat ID was received:',
+        streamError,
+      )
+      generationStartRef.current = null
+      setIsLoading(false)
+      setIsGenerating(false)
+      toast({
+        title: t('Could not open this chat'),
+        description: t('The chat was created but its ID was not received.'),
+        variant: 'destructive',
+      })
+      return
+    }
+
+    setIsLoading(true)
+    try {
+      const generationStart = generationStartRef.current
+      const chatDetails = await waitForChatBuild(
+        chatId,
+        generationStart?.startedAt ?? Date.now(),
+        generationStart?.previousVersionId,
+        generationStart?.previousVersionUpdatedAt,
+        getGenerationSignal(),
+      )
+      const files = extractCodeFiles(chatDetails)
+      if (files.length > 0) setChangedFiles(files)
+      const demoUrl = chatDetails.latestVersion?.demoUrl || chatDetails.demo
+      setCurrentChat((previous) => ({
+        ...previous,
+        id: chatId,
+        demo: demoUrl || previous?.demo,
+        latestVersionId: chatDetails.latestVersion?.id,
+        latestVersionUpdatedAt: chatDetails.latestVersion?.updatedAt,
+      }))
+      setActivePanel(demoUrl ? 'preview' : 'code')
+    } catch (error) {
+      if (generationStoppedRef.current) return
+      console.error('Streaming failed before the project build completed:', {
+        streamError,
+        error,
+      })
+      toast({
+        title: t('Project build did not finish'),
+        description:
+          error instanceof Error ? error.message : t('Please try again.'),
+        variant: 'destructive',
+      })
+    } finally {
+      clearGenerationController()
+      generationAbortControllerRef.current = null
+      generationStartRef.current = null
+      setIsLoading(false)
+      setIsGenerating(false)
     }
   }
 
@@ -809,6 +1015,15 @@ export function HomeClient() {
     setMessage('')
     setIsLoading(true)
     setIsGenerating(true)
+    generationStoppedRef.current = false
+    const controller = new AbortController()
+    generationAbortControllerRef.current = controller
+    setGenerationController(controller)
+    generationStartRef.current = {
+      startedAt: Date.now(),
+      previousVersionId: currentChat?.latestVersionId,
+      previousVersionUpdatedAt: currentChat?.latestVersionUpdatedAt,
+    }
     setChatHistory((prev) => [...prev, { type: 'user', content: userMessage }])
 
     try {
@@ -817,6 +1032,7 @@ export function HomeClient() {
         headers: {
           'Content-Type': 'application/json',
         },
+        signal: controller.signal,
         body: JSON.stringify({
           message: userMessage,
           chatId: currentChatId,
@@ -864,6 +1080,8 @@ export function HomeClient() {
         }
 
         if (isRateLimit) {
+          clearGenerationController()
+          generationAbortControllerRef.current = null
           setIsLoading(false)
           setIsGenerating(false)
           setShowRateLimit(true)
@@ -890,6 +1108,9 @@ export function HomeClient() {
         },
       ])
     } catch (error) {
+      if (controller.signal.aborted || generationStoppedRef.current) return
+      clearGenerationController()
+      generationAbortControllerRef.current = null
       console.error('Error:', error)
 
       // Parse structured error response
@@ -967,7 +1188,9 @@ export function HomeClient() {
                     onChatData={handleChatData}
                     onStreamingStarted={() => setIsLoading(false)}
                     isStreaming={isGenerating}
-                    onError={() => setIsGenerating(false)}
+                    isBuildPending={isLoading && isGenerating}
+                    isGenerationStopped={() => generationStoppedRef.current}
+                    onError={(error) => void handleStreamingError(error)}
                     onFollowUpClick={(s) => {
                       setMessage(s)
                       setTimeout(() => {
@@ -982,6 +1205,7 @@ export function HomeClient() {
                   message={message}
                   setMessage={setMessage}
                   onSubmit={handleChatSendMessage}
+                  onStopGeneration={stopCurrentGeneration}
                   isLoading={isLoading}
                   isGenerating={isGenerating}
                   showSuggestions={false}
@@ -1345,8 +1569,20 @@ export function HomeClient() {
                       disabled={isLoading}
                     />
                     <PromptInputSubmit
-                      disabled={!message.trim() || isLoading}
-                      status={isLoading ? 'streaming' : 'ready'}
+                      type={isGenerating ? 'button' : 'submit'}
+                      aria-label={
+                        isGenerating ? t('Stop generation') : t('Send message')
+                      }
+                      title={
+                        isGenerating ? t('Stop generation') : t('Send message')
+                      }
+                      onClick={
+                        isGenerating ? stopCurrentGeneration : undefined
+                      }
+                      disabled={
+                        isGenerating ? false : !message.trim() || isLoading
+                      }
+                      status={isGenerating ? 'streaming' : 'ready'}
                     />
                   </PromptInputTools>
                 </PromptInputToolbar>
@@ -1373,7 +1609,7 @@ export function HomeClient() {
                   type="button"
                   className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-sm text-card-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
                   onClick={() => {
-                    setMessage(t(label))
+                    setMessage(label)
                     setTimeout(() => {
                       const form = textareaRef.current?.form
                       if (form) form.requestSubmit()

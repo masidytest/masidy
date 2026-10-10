@@ -28,7 +28,12 @@ export function ResizableLayout({
   const [leftWidth, setLeftWidth] = useState(defaultLeftWidth)
   const [isDragging, setIsDragging] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
+  const hasUserResized = useRef(false)
   const isMobile = useIsMobile()
+
+  useEffect(() => {
+    if (!hasUserResized.current) setLeftWidth(defaultLeftWidth)
+  }, [defaultLeftWidth])
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     e.preventDefault()
@@ -40,14 +45,18 @@ export function ResizableLayout({
       if (!isDragging || !containerRef.current) return
 
       const containerRect = containerRef.current.getBoundingClientRect()
+      const isRtl = getComputedStyle(containerRef.current).direction === 'rtl'
       const newLeftWidth =
-        ((e.clientX - containerRect.left) / containerRect.width) * 100
+        ((isRtl ? containerRect.right - e.clientX : e.clientX - containerRect.left) /
+          containerRect.width) *
+        100
 
       // Clamp the width between min and max
       const clampedWidth = Math.min(
         Math.max(newLeftWidth, minLeftWidth),
         maxLeftWidth,
       )
+      hasUserResized.current = true
       setLeftWidth(clampedWidth)
     },
     [isDragging, minLeftWidth, maxLeftWidth],
@@ -98,7 +107,10 @@ export function ResizableLayout({
   // Desktop: Always render both panels to prevent remounting on resize
   return (
     <div ref={containerRef} className={cn('flex h-full', className)}>
-      <div className="flex flex-col" style={{ width: `${leftWidth}%` }}>
+      <div
+        className="flex min-h-0 min-w-0 shrink-0 flex-col"
+        style={{ width: `${leftWidth}%` }}
+      >
         {leftPanel}
       </div>
 
@@ -119,7 +131,7 @@ export function ResizableLayout({
         <div className="absolute inset-y-0 -left-2 -right-2" />
       </div>
 
-      <div className="flex-1 flex flex-col">{rightPanel}</div>
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">{rightPanel}</div>
     </div>
   )
 }
