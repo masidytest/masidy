@@ -1,7 +1,6 @@
 import 'server-only'
 
 import { execFile } from 'node:child_process'
-import { createRequire } from 'node:module'
 import { join } from 'node:path'
 import { promisify } from 'node:util'
 import {
@@ -10,8 +9,7 @@ import {
 } from '@/lib/vercel-platform'
 
 const execFileAsync = promisify(execFile)
-const require = createRequire(join(process.cwd(), 'package.json'))
-const cliPath = require.resolve('vercel/dist/vc.js')
+const cliPath = join(process.cwd(), 'node_modules', 'vercel', 'dist', 'vc.js')
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value && typeof value === 'object' && !Array.isArray(value))
