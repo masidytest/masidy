@@ -588,8 +588,8 @@ export function HomeClient() {
         let isRateLimit = response.status === 429
         try {
           const errorData = await response.json()
-          if (errorData.message) {
-            errorMessage = errorData.message
+          if (errorData.error || errorData.message) {
+            errorMessage = errorData.error || errorData.message
           } else if (isRateLimit) {
             errorMessage =
               'You have exceeded your maximum number of messages for the day. Please try again later.'

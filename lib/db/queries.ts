@@ -84,7 +84,14 @@ export async function createChatOwnership({
       })
       .onConflictDoNothing({ target: chat_ownerships.v0_chat_id })
   } catch (error) {
-    console.error('Failed to create chat ownership in database')
+    console.error('Failed to create chat ownership in database', {
+      name: error instanceof Error ? error.name : typeof error,
+      code:
+        error && typeof error === 'object' && 'code' in error
+          ? error.code
+          : undefined,
+      message: error instanceof Error ? error.message : undefined,
+    })
     throw error
   }
 }
